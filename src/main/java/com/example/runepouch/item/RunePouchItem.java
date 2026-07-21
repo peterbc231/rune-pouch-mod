@@ -31,15 +31,15 @@ public class RunePouchItem extends Item {
     @Override
     public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
         ItemStack stack = player.getHeldItem(hand);
-        if (world.isRemote) {
-            return ActionResult.resultSuccess(stack);
+        if (!world.isRemote) {
+            // 仅服务端执行打开逻辑
+            stack.damageItem(1, player, (p) -> p.sendBreakAnimation(hand));
+            NetworkHooks.openGui((ServerPlayerEntity) player, new SimpleNamedContainerProvider(
+                    (id, inv, p) -> new RunePouchContainer(id, inv, hand),
+                    new StringTextComponent("Rune Pouch")
+            ), buf -> buf.writeEnumValue(hand));
         }
-        stack.damageItem(1, player, (p) -> p.sendBreakAnimation(hand));
-        NetworkHooks.openGui((ServerPlayerEntity) player, new SimpleNamedContainerProvider(
-                (id, inv, p) -> new RunePouchContainer(id, inv, hand),
-                new StringTextComponent("Rune Pouch")
-        ), buf -> buf.writeEnumValue(hand));
-        return ActionResult.resultConsume(stack);
+        return ActionResult.resultSuccess(stack);
     }
 
     // 注意：这里没有 @Override，因为此方法在 Forge 1.16.5 中不要求覆盖

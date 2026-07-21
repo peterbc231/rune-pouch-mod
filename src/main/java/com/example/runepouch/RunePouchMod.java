@@ -1,5 +1,6 @@
 package com.example.runepouch;
 
+import com.example.runepouch.client.screen.RunePouchScreen;
 import com.example.runepouch.init.ModContainers;
 import com.example.runepouch.init.ModItems;
 import net.minecraft.client.gui.ScreenManager;
@@ -26,7 +27,7 @@ public class RunePouchMod {
 
     private void clientSetup(final FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
-            ScreenManager.registerFactory(ModContainers.RUNE_POUCH.get(), com.example.runepouch.client.screen.RunePouchScreen::new);
+            ScreenManager.register(ModContainers.RUNE_POUCH.get(), RunePouchScreen::new);
         });
     }
 }
