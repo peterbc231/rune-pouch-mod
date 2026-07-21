@@ -28,7 +28,6 @@ public class RunePouchItem extends Item {
         super(new Properties().maxStackSize(1).maxDamage(500));
     }
 
-    @Override
     public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
         ItemStack stack = player.getHeldItem(hand);
         if (!world.isRemote) {

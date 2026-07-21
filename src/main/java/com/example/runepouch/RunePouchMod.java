@@ -27,7 +27,7 @@ public class RunePouchMod {
 
     private void clientSetup(final FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
-            ScreenManager.register(ModContainers.RUNE_POUCH.get(), RunePouchScreen::new);
+            ScreenManager.registerFactory(ModContainers.RUNE_POUCH.get(), RunePouchScreen::new);
         });
     }
 }
