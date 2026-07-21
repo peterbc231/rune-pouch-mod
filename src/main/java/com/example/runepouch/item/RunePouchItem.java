@@ -11,7 +11,6 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.World;
-import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
@@ -26,68 +25,30 @@ public class RunePouchItem extends Item {
     public static final int SLOTS = 18;
 
     public RunePouchItem() {
-        super(new Properties().stacksTo(1).durability(500));
+        super(new Properties().maxStackSize(1).maxDamage(500));
     }
 
     @Override
     public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
-        ItemStack stack = player.getItemInHand(hand);
-        if (world.isClientSide) {
-            return ActionResult.success(stack);
+        ItemStack stack = player.getHeldItem(hand);
+        if (world.isRemote) {
+            return ActionResult.resultSuccess(stack);
         }
-        // 每次打开消耗1点耐久
-        stack.hurt(1, player.getRandom(), null);
+        stack.damageItem(1, player, (p) -> p.sendBreakAnimation(hand));
         NetworkHooks.openGui((ServerPlayerEntity) player, new SimpleNamedContainerProvider(
                 (id, inv, p) -> new RunePouchContainer(id, inv, hand),
                 new StringTextComponent("Rune Pouch")
-        ), buf -> buf.writeByte(hand.ordinal()));
-        return ActionResult.consume(stack);
+        ), buf -> buf.writeEnum(hand));
+        return ActionResult.resultConsume(stack);
     }
 
     @Nullable
     @Override
     public ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundNBT nbt) {
-        return new CapabilityProvider(stack, nbt);
-    }
-
-    // ========== 数据持久化（关键） ==========
-    @Override
-    public CompoundNBT getShareTag(ItemStack stack) {
-        CompoundNBT tag = stack.getOrCreateTag();
-        // 通过Capability获取handler并序列化
-        stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
-                .filter(handler -> handler instanceof ItemStackHandler)
-                .ifPresent(handler -> {
-                    ItemStackHandler h = (ItemStackHandler) handler;
-                    tag.put("Inventory", h.serializeNBT());
-                });
-        return tag;
-    }
-
-    @Override
-    public void readShareTag(ItemStack stack, @Nullable CompoundNBT nbt) {
-        if (nbt != null && nbt.contains("Inventory")) {
-            stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
-                    .filter(handler -> handler instanceof ItemStackHandler)
-                    .ifPresent(handler -> {
-                        ItemStackHandler h = (ItemStackHandler) handler;
-                        h.deserializeNBT(nbt.getCompound("Inventory"));
-                    });
-        }
-        super.readShareTag(stack, nbt);
-    }
-
-    // ========== 内部Capability提供者 ==========
-    private static class CapabilityProvider implements ICapabilityProvider {
-        private final ItemStackHandler handler;
-        private final LazyOptional<ItemStackHandler> optional;
-
-        public CapabilityProvider(ItemStack stack, @Nullable CompoundNBT nbt) {
-            this.handler = new ItemStackHandler(SLOTS) {
+        return new ICapabilityProvider() {
+            private final ItemStackHandler handler = new ItemStackHandler(SLOTS) {
                 @Override
                 protected void onContentsChanged(int slot) {
-                    super.onContentsChanged(slot);
-                    // 任何变动都标记为需要保存（耐久消耗已由use方法处理）
                     stack.getOrCreateTag().putBoolean("Dirty", true);
                 }
 
@@ -99,19 +60,41 @@ public class RunePouchItem extends Item {
                     return path.contains("rune");
                 }
             };
-            if (nbt != null && nbt.contains("Inventory")) {
-                handler.deserializeNBT(nbt.getCompound("Inventory"));
-            }
-            this.optional = LazyOptional.of(() -> handler);
-        }
+            private final LazyOptional<ItemStackHandler> optional = LazyOptional.of(() -> handler);
 
-        @Nonnull
-        @Override
-        public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable net.minecraft.util.Direction side) {
-            if (cap == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
-                return optional.cast();
+            {
+                if (nbt != null && nbt.contains("Inventory")) {
+                    handler.deserializeNBT(nbt.getCompound("Inventory"));
+                }
             }
-            return LazyOptional.empty();
+
+            @Nonnull
+            @Override
+            public <T> LazyOptional<T> getCapability(@Nonnull net.minecraftforge.common.capabilities.Capability<T> cap, @Nullable net.minecraft.util.Direction side) {
+                if (cap == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
+                    return optional.cast();
+                }
+                return LazyOptional.empty();
+            }
+        };
+    }
+
+    @Override
+    public CompoundNBT getShareTag(ItemStack stack) {
+        CompoundNBT tag = stack.getOrCreateTag();
+        stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
+                .filter(h -> h instanceof ItemStackHandler)
+                .ifPresent(h -> tag.put("Inventory", ((ItemStackHandler) h).serializeNBT()));
+        return tag;
+    }
+
+    @Override
+    public void readShareTag(ItemStack stack, @Nullable CompoundNBT nbt) {
+        if (nbt != null && nbt.contains("Inventory")) {
+            stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
+                    .filter(h -> h instanceof ItemStackHandler)
+                    .ifPresent(h -> ((ItemStackHandler) h).deserializeNBT(nbt.getCompound("Inventory")));
         }
+        super.readShareTag(stack, nbt);
     }
 }

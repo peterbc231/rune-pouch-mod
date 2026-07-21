@@ -13,24 +13,24 @@ public class RunePouchScreen extends ContainerScreen<RunePouchContainer> {
 
     public RunePouchScreen(RunePouchContainer container, PlayerInventory inv, ITextComponent title) {
         super(container, inv, title);
-        this.imageWidth = 176;
-        this.imageHeight = 166;
+        this.xSize = 176;
+        this.ySize = 166;
         this.inventoryLabelY = 72;
     }
 
     @Override
-    protected void renderBg(MatrixStack stack, float partial, int mouseX, int mouseY) {
+    protected void drawGuiContainerBackgroundLayer(MatrixStack matrixStack, float partialTicks, int mouseX, int mouseY) {
         RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        getMinecraft().getTextureManager().bind(BG);
-        int x = (width - imageWidth) / 2;
-        int y = (height - imageHeight) / 2;
-        blit(stack, x, y, 0, 0, imageWidth, imageHeight);
+        this.minecraft.getTextureManager().bindTexture(BG);
+        int x = (this.width - this.xSize) / 2;
+        int y = (this.height - this.ySize) / 2;
+        this.blit(matrixStack, x, y, 0, 0, this.xSize, this.ySize);
     }
 
     @Override
-    public void render(MatrixStack stack, int mouseX, int mouseY, float partial) {
-        renderBackground(stack);
-        super.render(stack, mouseX, mouseY, partial);
-        renderTooltip(stack, mouseX, mouseY);
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+        this.renderBackground(matrixStack);
+        super.render(matrixStack, mouseX, mouseY, partialTicks);
+        this.renderHoveredToolTip(matrixStack, mouseX, mouseY);
     }
 }

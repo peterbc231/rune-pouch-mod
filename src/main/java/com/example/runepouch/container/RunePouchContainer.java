@@ -18,11 +18,11 @@ public class RunePouchContainer extends Container {
 
     public RunePouchContainer(int id, PlayerInventory inv, Hand hand) {
         super(ModContainers.RUNE_POUCH.get(), id);
-        this.pouchStack = inv.player.getItemInHand(hand);
+        this.pouchStack = inv.player.getHeldItem(hand);
         this.handler = pouchStack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
                 .orElseThrow(() -> new IllegalStateException("Rune Pouch capability missing!"));
 
-        // 符文袋格子：9列 x 2行 = 18格
+        // 符文袋格子：9x2
         for (int row = 0; row < 2; row++) {
             for (int col = 0; col < 9; col++) {
                 int index = row * 9 + col;
@@ -30,47 +30,47 @@ public class RunePouchContainer extends Container {
             }
         }
 
-        // 玩家背包 3行
+        // 玩家背包
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 addSlot(new Slot(inv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
             }
         }
-        // 快捷栏 1行
+        // 快捷栏
         for (int col = 0; col < 9; col++) {
             addSlot(new Slot(inv, col, 8 + col * 18, 142));
         }
     }
 
     @Override
-    public ItemStack quickMoveStack(PlayerEntity player, int index) {
+    public ItemStack transferStackInSlot(PlayerEntity player, int index) {
         ItemStack stack = ItemStack.EMPTY;
-        Slot slot = getSlot(index);
-        if (slot != null && slot.hasItem()) {
-            ItemStack stackInSlot = slot.getItem();
+        Slot slot = this.inventorySlots.get(index);
+        if (slot != null && slot.getHasStack()) {
+            ItemStack stackInSlot = slot.getStack();
             stack = stackInSlot.copy();
             if (index < RunePouchItem.SLOTS) {
-                if (!moveItemStackTo(stackInSlot, RunePouchItem.SLOTS, slots.size(), true)) {
+                if (!this.mergeItemStack(stackInSlot, RunePouchItem.SLOTS, this.inventorySlots.size(), true)) {
                     return ItemStack.EMPTY;
                 }
             } else {
-                if (!moveItemStackTo(stackInSlot, 0, RunePouchItem.SLOTS, false)) {
+                if (!this.mergeItemStack(stackInSlot, 0, RunePouchItem.SLOTS, false)) {
                     return ItemStack.EMPTY;
                 }
             }
             if (stackInSlot.isEmpty()) {
-                slot.set(ItemStack.EMPTY);
+                slot.putStack(ItemStack.EMPTY);
             } else {
-                slot.setChanged();
+                slot.onSlotChanged();
             }
         }
         return stack;
     }
 
     @Override
-    public boolean stillValid(PlayerEntity player) {
-        ItemStack mainHand = player.getMainHandItem();
-        ItemStack offHand = player.getOffhandItem();
+    public boolean canInteractWith(PlayerEntity player) {
+        ItemStack mainHand = player.getHeldItemMainhand();
+        ItemStack offHand = player.getHeldItemOffhand();
         return mainHand.getItem() instanceof RunePouchItem || offHand.getItem() instanceof RunePouchItem;
     }
 }
