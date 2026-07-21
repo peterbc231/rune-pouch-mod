@@ -1,21 +1,12 @@
 package com.example.runepouch.item;
 
-import com.example.runepouch.container.RunePouchContainer;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.container.SimpleNamedContainerProvider;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
-import net.minecraftforge.fml.network.NetworkHooks;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -28,20 +19,8 @@ public class RunePouchItem extends Item {
         super(new Properties().maxStackSize(1).maxDamage(500));
     }
 
-    public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
-        ItemStack stack = player.getHeldItem(hand);
-        if (!world.isRemote) {
-            // 仅服务端执行打开逻辑
-            stack.damageItem(1, player, (p) -> p.sendBreakAnimation(hand));
-            NetworkHooks.openGui((ServerPlayerEntity) player, new SimpleNamedContainerProvider(
-                    (id, inv, p) -> new RunePouchContainer(id, inv, hand),
-                    new StringTextComponent("Rune Pouch")
-            ), buf -> buf.writeEnumValue(hand));
-        }
-        return ActionResult.resultSuccess(stack);
-    }
-
-    // 注意：这里没有 @Override，因为此方法在 Forge 1.16.5 中不要求覆盖
+    @Nullable
+    @Override
     public ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundNBT nbt) {
         return new ICapabilityProvider() {
             private final ItemStackHandler handler = new ItemStackHandler(SLOTS) {

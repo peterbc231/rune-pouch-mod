@@ -1,6 +1,7 @@
 package com.example.runepouch;
 
 import com.example.runepouch.client.screen.RunePouchScreen;
+import com.example.runepouch.event.ItemEventHandler;
 import com.example.runepouch.init.ModContainers;
 import com.example.runepouch.init.ModItems;
 import net.minecraft.client.gui.ScreenManager;
@@ -22,7 +23,7 @@ public class RunePouchMod {
         ModItems.ITEMS.register(bus);
         ModContainers.CONTAINERS.register(bus);
         bus.addListener(this::clientSetup);
-        MinecraftForge.EVENT_BUS.register(this);
+        MinecraftForge.EVENT_BUS.register(new ItemEventHandler());
     }
 
     private void clientSetup(final FMLClientSetupEvent event) {
