@@ -42,8 +42,7 @@ public class RunePouchItem extends Item {
         return ActionResult.resultConsume(stack);
     }
 
-    @Nullable
-    @Override
+    // 移除 @Override，因为此方法签名在 Forge 1.16.5 中可能被特殊处理
     public ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundNBT nbt) {
         return new ICapabilityProvider() {
             private final ItemStackHandler handler = new ItemStackHandler(SLOTS) {
