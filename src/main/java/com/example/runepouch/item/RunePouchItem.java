@@ -38,7 +38,7 @@ public class RunePouchItem extends Item {
         NetworkHooks.openGui((ServerPlayerEntity) player, new SimpleNamedContainerProvider(
                 (id, inv, p) -> new RunePouchContainer(id, inv, hand),
                 new StringTextComponent("Rune Pouch")
-        ), buf -> buf.writeEnum(hand));
+        ), buf -> buf.writeEnumValue(hand));
         return ActionResult.resultConsume(stack);
     }
 

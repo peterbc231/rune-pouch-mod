@@ -12,7 +12,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 public class ModContainers {
     public static final DeferredRegister<ContainerType<?>> CONTAINERS = DeferredRegister.create(ForgeRegistries.CONTAINERS, RunePouchMod.MOD_ID);
     public static final RegistryObject<ContainerType<RunePouchContainer>> RUNE_POUCH = CONTAINERS.register("rune_pouch", () -> IForgeContainerType.create((id, inv, data) -> {
-        Hand hand = data.readEnum(Hand.class);
+        Hand hand = data.readEnumValue(Hand.class);
         return new RunePouchContainer(id, inv, hand);
     }));
 }
