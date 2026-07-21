@@ -35,6 +35,8 @@ public class RunePouchItem extends Item {
         if (world.isClientSide) {
             return ActionResult.success(stack);
         }
+        // 每次打开消耗1点耐久
+        stack.hurt(1, player.getRandom(), null);
         NetworkHooks.openGui((ServerPlayerEntity) player, new SimpleNamedContainerProvider(
                 (id, inv, p) -> new RunePouchContainer(id, inv, hand),
                 new StringTextComponent("Rune Pouch")
@@ -48,6 +50,34 @@ public class RunePouchItem extends Item {
         return new CapabilityProvider(stack, nbt);
     }
 
+    // ========== 数据持久化（关键） ==========
+    @Override
+    public CompoundNBT getShareTag(ItemStack stack) {
+        CompoundNBT tag = stack.getOrCreateTag();
+        // 通过Capability获取handler并序列化
+        stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
+                .filter(handler -> handler instanceof ItemStackHandler)
+                .ifPresent(handler -> {
+                    ItemStackHandler h = (ItemStackHandler) handler;
+                    tag.put("Inventory", h.serializeNBT());
+                });
+        return tag;
+    }
+
+    @Override
+    public void readShareTag(ItemStack stack, @Nullable CompoundNBT nbt) {
+        if (nbt != null && nbt.contains("Inventory")) {
+            stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
+                    .filter(handler -> handler instanceof ItemStackHandler)
+                    .ifPresent(handler -> {
+                        ItemStackHandler h = (ItemStackHandler) handler;
+                        h.deserializeNBT(nbt.getCompound("Inventory"));
+                    });
+        }
+        super.readShareTag(stack, nbt);
+    }
+
+    // ========== 内部Capability提供者 ==========
     private static class CapabilityProvider implements ICapabilityProvider {
         private final ItemStackHandler handler;
         private final LazyOptional<ItemStackHandler> optional;
@@ -57,6 +87,7 @@ public class RunePouchItem extends Item {
                 @Override
                 protected void onContentsChanged(int slot) {
                     super.onContentsChanged(slot);
+                    // 任何变动都标记为需要保存（耐久消耗已由use方法处理）
                     stack.getOrCreateTag().putBoolean("Dirty", true);
                 }
 
@@ -65,7 +96,6 @@ public class RunePouchItem extends Item {
                     if (stack.isEmpty()) return false;
                     if (stack.getItem().getRegistryName() == null) return false;
                     String path = stack.getItem().getRegistryName().getPath().toLowerCase(Locale.ROOT);
-                    // 稳定匹配所有包含 "rune" 的 ID（完美兼容虚无世界3 的 fire_rune, water_rune 等）
                     return path.contains("rune");
                 }
             };
