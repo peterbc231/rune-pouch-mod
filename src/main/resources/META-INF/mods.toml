@@ -1,0 +1,10 @@
+modLoader="javafml"
+loaderVersion="[36,)"
+license="All rights reserved"
+
+[[mods]]
+modId="runepouch"
+version="1.0.0"
+displayName="Rune Pouch"
+authors="Termux_Dev"
+description="A pouch to carry all your runes. Holds 18 runes (9x2)."
