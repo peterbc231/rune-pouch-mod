@@ -15,8 +15,14 @@ import java.util.Locale;
 public class RunePouchItem extends Item {
     public static final int SLOTS = 18;
 
+    // 无参构造（默认耐久500，堆叠1）
     public RunePouchItem() {
         super(new Properties().maxStackSize(1).maxDamage(500));
+    }
+
+    // 带参构造（支持自定义属性，如创造标签页）
+    public RunePouchItem(Properties properties) {
+        super(properties);
     }
 
     @Nullable

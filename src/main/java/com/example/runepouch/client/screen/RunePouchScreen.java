@@ -9,14 +9,13 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 
 public class RunePouchScreen extends ContainerScreen<RunePouchContainer> {
-    // 你可以替换成自己的纹理：new ResourceLocation("runepouch", "textures/gui/rune_pouch.png")
     private static final ResourceLocation BG = new ResourceLocation("minecraft", "textures/gui/container/generic_54.png");
 
     public RunePouchScreen(RunePouchContainer container, PlayerInventory inv, ITextComponent title) {
         super(container, inv, title);
-        this.xSize = 176;   // 窗口宽度
-        this.ySize = 166;   // 窗口高度
-        this.inventoryLabelY = 72;  // "背包"文字Y坐标
+        this.xSize = 176;
+        this.ySize = 166;
+        // 不设置 inventoryLabelY，使用默认位置
     }
 
     @Override
