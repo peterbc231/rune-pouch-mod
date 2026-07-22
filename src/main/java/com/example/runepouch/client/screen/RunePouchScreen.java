@@ -15,7 +15,6 @@ public class RunePouchScreen extends ContainerScreen<RunePouchContainer> {
         super(container, inv, title);
         this.xSize = 176;
         this.ySize = 166;
-        // 不设置 inventoryLabelY，使用默认位置
     }
 
     @Override
