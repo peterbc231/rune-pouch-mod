@@ -17,7 +17,6 @@ public class RunePouchScreen extends ContainerScreen<RunePouchContainer> {
         // 窗口高度：只显示前2行格子 + 背包区域（保持间隔）
         // 原版大箱子高度是222，但我们裁剪到 125（具体数值经测量，确保背包完整）
         this.ySize = 125;
-        this.inventoryLabelY = 60; // 背包文字位置微调
     }
 
     @Override
