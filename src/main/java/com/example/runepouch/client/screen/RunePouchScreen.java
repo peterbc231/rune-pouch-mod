@@ -9,14 +9,12 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 
 public class RunePouchScreen extends ContainerScreen<RunePouchContainer> {
-    // 使用原版大箱子纹理
     private static final ResourceLocation BG = new ResourceLocation("minecraft", "textures/gui/container/generic_54.png");
 
     public RunePouchScreen(RunePouchContainer container, PlayerInventory inv, ITextComponent title) {
         super(container, inv, title);
-        this.xSize = 176;           // 宽度固定176
-        this.ySize = 150;           // 高度150：刚好显示2行符文格 + 背包（裁剪掉多余的4行）
-        this.inventoryLabelY = 72;   // "物品栏"文字位置
+        this.xSize = 176;
+        this.ySize = 150;
     }
 
     @Override
@@ -25,7 +23,6 @@ public class RunePouchScreen extends ContainerScreen<RunePouchContainer> {
         this.minecraft.getTextureManager().bindTexture(BG);
         int x = (this.width - this.xSize) / 2;
         int y = (this.height - this.ySize) / 2;
-        // 从纹理(0,0)开始截取，只截取高度 ySize 部分，即只显示顶部2行格子
         this.blit(matrixStack, x, y, 0, 0, this.xSize, this.ySize);
     }
 
@@ -34,5 +31,14 @@ public class RunePouchScreen extends ContainerScreen<RunePouchContainer> {
         this.renderBackground(matrixStack);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
         this.renderHoveredTooltip(matrixStack, mouseX, mouseY);
+    }
+
+    // 自定义文字位置：用这个方法代替 inventoryLabelY
+    @Override
+    protected void renderLabels(MatrixStack matrixStack, int mouseX, int mouseY) {
+        // 绘制标题（窗口左上角）
+        this.font.draw(matrixStack, this.title, (float)this.titleLabelX, (float)this.titleLabelY, 4210752);
+        // 绘制"物品栏"文字，位置自定义：X=8, Y=72
+        this.font.draw(matrixStack, this.playerInventory.getDisplayName(), 8.0F, 72.0F, 4210752);
     }
 }
