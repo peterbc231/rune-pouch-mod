@@ -23,27 +23,27 @@ public class RunePouchContainer extends Container {
                 .orElseThrow(() -> new IllegalStateException("Rune Pouch capability missing!"));
 
         // === 符文袋格子：2行 × 9列（索引 0~17）===
+        // 上移 12 像素，让符文格与大箱子顶部对齐后留出间隙
         for (int row = 0; row < 2; row++) {
             for (int col = 0; col < 9; col++) {
                 int index = row * 9 + col;
-                // 原版格子起始坐标：8, 18，每格间隔18
-                addSlot(new SlotItemHandler(handler, index, 8 + col * 18, 18 + row * 18));
+                addSlot(new SlotItemHandler(handler, index, 8 + col * 18, 6 + row * 18));
             }
         }
 
-        // === 玩家背包：3行 × 9列（索引 18~44）===
-        // 原版背包起始Y是84，但因为我们只显示2行袋子，把背包往上提8像素，紧贴袋子底部
+        // === 玩家背包：3行 × 9列（原版位置 Y=84）===
+        // 保持原版坐标，让背包与原版箱子一致
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 int index = 18 + row * 9 + col;
-                addSlot(new Slot(inv, col + row * 9 + 9, 8 + col * 18, 58 + row * 18));
+                addSlot(new Slot(inv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
             }
         }
 
-        // === 快捷栏：1行 × 9列（索引 45~53）===
+        // === 快捷栏：1行 × 9列（原版位置 Y=142）===
         for (int col = 0; col < 9; col++) {
             int index = 45 + col;
-            addSlot(new Slot(inv, col, 8 + col * 18, 116));
+            addSlot(new Slot(inv, col, 8 + col * 18, 142));
         }
     }
 

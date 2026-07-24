@@ -14,7 +14,7 @@ public class RunePouchScreen extends ContainerScreen<RunePouchContainer> {
     public RunePouchScreen(RunePouchContainer container, PlayerInventory inv, ITextComponent title) {
         super(container, inv, title);
         this.xSize = 176;
-        this.ySize = 200;
+        this.ySize = 166;  // 恢复为原版大箱子完整高度
     }
 
     @Override
@@ -23,6 +23,7 @@ public class RunePouchScreen extends ContainerScreen<RunePouchContainer> {
         this.minecraft.getTextureManager().bindTexture(BG);
         int x = (this.width - this.xSize) / 2;
         int y = (this.height - this.ySize) / 2;
+        // 从纹理的 (0,0) 开始绘制，但只绘制到 ySize，让底部装饰完整出现
         this.blit(matrixStack, x, y, 0, 0, this.xSize, this.ySize);
     }
 
@@ -33,12 +34,10 @@ public class RunePouchScreen extends ContainerScreen<RunePouchContainer> {
         this.renderHoveredTooltip(matrixStack, mouseX, mouseY);
     }
 
-    // 1.16.5 正确的覆盖方法名
     @Override
     protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int mouseX, int mouseY) {
-        // 绘制标题：左上角
         this.font.drawString(matrixStack, this.title.getString(), 8.0F, 6.0F, 4210752);
-        // 绘制"物品栏"：X=8, Y=72
+        // "物品栏"文字放在原版位置（Y=72）
         this.font.drawString(matrixStack, this.playerInventory.getDisplayName().getString(), 8.0F, 72.0F, 4210752);
     }
 }
