@@ -14,7 +14,7 @@ public class RunePouchScreen extends ContainerScreen<RunePouchContainer> {
     public RunePouchScreen(RunePouchContainer container, PlayerInventory inv, ITextComponent title) {
         super(container, inv, title);
         this.xSize = 176;
-        this.ySize = 150;
+        this.ySize = 200;
     }
 
     @Override
