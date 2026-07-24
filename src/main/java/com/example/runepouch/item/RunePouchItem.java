@@ -13,11 +13,11 @@ import javax.annotation.Nullable;
 import java.util.Locale;
 
 public class RunePouchItem extends Item {
-    public static final int SLOTS = 18;
+    public static final int SLOTS = 27;
 
     // 无参构造（默认耐久500，堆叠1）
     public RunePouchItem() {
-        super(new Properties().maxStackSize(1).maxDamage(500));
+        super(new Properties().maxStackSize(1).maxDamage(999));
     }
 
     // 带参构造（支持自定义属性，如创造标签页）

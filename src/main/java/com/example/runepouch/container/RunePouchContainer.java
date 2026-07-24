@@ -23,7 +23,7 @@ public class RunePouchContainer extends Container {
                 .orElseThrow(() -> new IllegalStateException("Rune Pouch capability missing!"));
 
         // 符文袋格子：9x2
-        for (int row = 0; row < 2; row++) {
+        for (int row = 0; row < ，3; row++) {
             for (int col = 0; col < 9; col++) {
                 int index = row * 9 + col;
                 addSlot(new SlotItemHandler(handler, index, 8 + col * 18, 18 + row * 18));

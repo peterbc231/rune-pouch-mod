@@ -21,5 +21,5 @@ public class ModItems {
     };
 
     public static final RegistryObject<Item> RUNE_POUCH = ITEMS.register("rune_pouch",
-            () -> new RunePouchItem(new Item.Properties().group(RUNE_POUCH_GROUP)));
+            () -> new RunePouchItem(new Item.Properties().group(ItemGroup.TOOLS)));
 }
