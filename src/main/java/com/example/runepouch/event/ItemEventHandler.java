@@ -28,7 +28,7 @@ public class ItemEventHandler {
                 stack.damageItem(1, player, (p) -> p.sendBreakAnimation(hand));
                 NetworkHooks.openGui((ServerPlayerEntity) player, new SimpleNamedContainerProvider(
                         (id, inv, p) -> new RunePouchContainer(id, inv, hand),
-                        new StringTextComponent("Rune Pouch")
+                        new StringTextComponent("符文袋")
                 ), buf -> buf.writeEnumValue(hand));
             }
         }
