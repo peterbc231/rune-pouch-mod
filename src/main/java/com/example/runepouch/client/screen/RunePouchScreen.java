@@ -9,14 +9,14 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 
 public class RunePouchScreen extends ContainerScreen<RunePouchContainer> {
-    private static final ResourceLocation BG = new ResourceLocation("runepouch", "textures/gui/rune_gui.png");
+    // 使用原版大箱子纹理
+    private static final ResourceLocation BG = new ResourceLocation("minecraft", "textures/gui/container/generic_54.png");
 
     public RunePouchScreen(RunePouchContainer container, PlayerInventory inv, ITextComponent title) {
         super(container, inv, title);
-        this.xSize = 176;
-        // 窗口高度：只显示前2行格子 + 背包区域（保持间隔）
-        // 原版大箱子高度是222，但我们裁剪到 125（具体数值经测量，确保背包完整）
-        this.ySize = 166;
+        this.xSize = 176;           // 宽度固定176
+        this.ySize = 150;           // 高度150：刚好显示2行符文格 + 背包（裁剪掉多余的4行）
+        this.inventoryLabelY = 72;   // "物品栏"文字位置
     }
 
     @Override
@@ -25,7 +25,7 @@ public class RunePouchScreen extends ContainerScreen<RunePouchContainer> {
         this.minecraft.getTextureManager().bindTexture(BG);
         int x = (this.width - this.xSize) / 2;
         int y = (this.height - this.ySize) / 2;
-        // 从纹理的 (0,0) 开始绘制，但只绘制高度为 ySize 的区域（即只显示顶部部分）
+        // 从纹理(0,0)开始截取，只截取高度 ySize 部分，即只显示顶部2行格子
         this.blit(matrixStack, x, y, 0, 0, this.xSize, this.ySize);
     }
 
