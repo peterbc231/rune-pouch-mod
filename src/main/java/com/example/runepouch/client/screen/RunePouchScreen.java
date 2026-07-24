@@ -33,11 +33,12 @@ public class RunePouchScreen extends ContainerScreen<RunePouchContainer> {
         this.renderHoveredTooltip(matrixStack, mouseX, mouseY);
     }
 
+    // 1.16.5 正确的覆盖方法名
     @Override
-    protected void renderLabels(MatrixStack matrixStack, int mouseX, int mouseY) {
-        // 绘制标题（左上角，灰色）
+    protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int mouseX, int mouseY) {
+        // 绘制标题：左上角
         this.font.drawString(matrixStack, this.title.getString(), 8.0F, 6.0F, 4210752);
-        // 绘制"物品栏"文字（固定位置：X=8, Y=72）
+        // 绘制"物品栏"：X=8, Y=72
         this.font.drawString(matrixStack, this.playerInventory.getDisplayName().getString(), 8.0F, 72.0F, 4210752);
     }
 }
