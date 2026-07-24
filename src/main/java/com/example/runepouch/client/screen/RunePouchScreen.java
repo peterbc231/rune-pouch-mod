@@ -9,7 +9,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 
 public class RunePouchScreen extends ContainerScreen<RunePouchContainer> {
-    private static final ResourceLocation BG = new ResourceLocation("minecraft", "textures/gui/container/generic_54.png");
+    private static final ResourceLocation BG = new ResourceLocation("runepouch", "textures/gui/rune_gui.png");
 
     public RunePouchScreen(RunePouchContainer container, PlayerInventory inv, ITextComponent title) {
         super(container, inv, title);
