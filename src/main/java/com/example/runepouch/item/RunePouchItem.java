@@ -5,7 +5,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
@@ -25,7 +24,7 @@ public class RunePouchItem extends Item {
         super(properties);
     }
 
-    // ========== 直接 NBT 存储（用于可靠持久化） ==========
+    // ========== 直接NBT存储（用于可靠持久化） ==========
     public ItemStackHandler getHandler(ItemStack stack) {
         CompoundNBT tag = stack.getOrCreateTag();
         ItemStackHandler handler = new ItemStackHandler(SLOTS) {
@@ -53,15 +52,15 @@ public class RunePouchItem extends Item {
         tag.put("Inventory", handler.serializeNBT());
     }
 
-    // ========== Capability 支持（供其他模组联动） ==========
+    // ========== Capability支持（供其他模组联动） ==========
+    @Nullable
     @Override
     public ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundNBT nbt) {
         return new ICapabilityProvider() {
-            // 这里返回一个与直接NBT存储同步的handler
             private final ItemStackHandler capHandler = new ItemStackHandler(SLOTS) {
                 @Override
                 protected void onContentsChanged(int slot) {
-                    // 当其他模组通过Capability修改内容时，自动同步到直接NBT存储
+                    // 当其他模组通过Capability修改时，自动同步到直接NBT
                     saveHandler(stack, this);
                 }
 
@@ -75,12 +74,12 @@ public class RunePouchItem extends Item {
             };
             private final LazyOptional<ItemStackHandler> optional = LazyOptional.of(() -> capHandler);
 
-            // 初始化时从NBT恢复数据
+            // 初始化：如果传入的nbt有数据，则恢复
             {
                 if (nbt != null && nbt.contains("Inventory")) {
                     capHandler.deserializeNBT(nbt.getCompound("Inventory"));
                 }
-                // 首次创建时同步
+                // 如果物品还没有Inventory，创建一个空的
                 if (!stack.getOrCreateTag().contains("Inventory")) {
                     saveHandler(stack, capHandler);
                 }
@@ -97,10 +96,10 @@ public class RunePouchItem extends Item {
         };
     }
 
-    // ========== 序列化（丢弃/捡起） ==========
+    // ========== 序列化（丢弃时保存） ==========
     @Override
     public CompoundNBT getShareTag(ItemStack stack) {
-        // 先通过Capability同步数据
+        // 先确保Capability数据已同步到NBT
         stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
                 .ifPresent(h -> {
                     if (h instanceof ItemStackHandler) {
@@ -110,16 +109,20 @@ public class RunePouchItem extends Item {
         return stack.getOrCreateTag();
     }
 
+    // ========== 反序列化（捡起时恢复） ==========
     @Override
     public void readShareTag(ItemStack stack, @Nullable CompoundNBT nbt) {
         if (nbt != null) {
-            // 恢复NBT数据
-            stack.setTag(nbt);
+            // 将NBT数据复制到物品
+            CompoundNBT tag = stack.getOrCreateTag();
+            for (String key : nbt.keySet()) {
+                tag.put(key, nbt.get(key));
+            }
             // 通知Capability重新加载
             stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
                     .ifPresent(h -> {
-                        if (nbt.contains("Inventory") && h instanceof ItemStackHandler) {
-                            ((ItemStackHandler) h).deserializeNBT(nbt.getCompound("Inventory"));
+                        if (h instanceof ItemStackHandler && tag.contains("Inventory")) {
+                            ((ItemStackHandler) h).deserializeNBT(tag.getCompound("Inventory"));
                         }
                     });
         }

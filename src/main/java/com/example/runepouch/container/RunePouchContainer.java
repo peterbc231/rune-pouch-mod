@@ -22,7 +22,7 @@ public class RunePouchContainer extends Container {
         this.pouchStack = inv.player.getHeldItem(hand);
         this.pouchItem = (RunePouchItem) pouchStack.getItem();
 
-        // 优先使用Capability（如果存在），否则使用直接NBT
+        // 优先使用Capability（如果存在），否则直接NBT
         this.handler = pouchStack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
                 .orElseGet(() -> pouchItem.getHandler(pouchStack));
 
@@ -67,8 +67,10 @@ public class RunePouchContainer extends Container {
             } else {
                 slot.onSlotChanged();
             }
-            // 确保数据保存
-            pouchItem.saveHandler(pouchStack, (net.minecraftforge.items.ItemStackHandler) handler);
+            // 强制保存（如果handler是ItemStackHandler）
+            if (handler instanceof net.minecraftforge.items.ItemStackHandler) {
+                pouchItem.saveHandler(pouchStack, (net.minecraftforge.items.ItemStackHandler) handler);
+            }
             return copy;
         }
         return ItemStack.EMPTY;
@@ -85,7 +87,10 @@ public class RunePouchContainer extends Container {
     public void onContainerClosed(PlayerEntity player) {
         super.onContainerClosed(player);
         if (!player.world.isRemote) {
-            pouchItem.saveHandler(pouchStack, (net.minecraftforge.items.ItemStackHandler) handler);
+            // 关闭时保存
+            if (handler instanceof net.minecraftforge.items.ItemStackHandler) {
+                pouchItem.saveHandler(pouchStack, (net.minecraftforge.items.ItemStackHandler) handler);
+            }
         }
     }
 }
