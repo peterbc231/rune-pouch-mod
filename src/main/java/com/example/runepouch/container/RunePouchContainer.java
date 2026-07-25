@@ -1,7 +1,7 @@
 package com.example.runepouch.container;
 
 import com.example.runepouch.init.ModContainers;
-import com.example.runepouch.item.RunePouchItem;
+import com.example.runepouch.inventory.RunePouchInventory;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.Container;
@@ -9,28 +9,23 @@ import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
 import net.minecraftforge.items.CapabilityItemHandler;
-import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.SlotItemHandler;
 
 public class RunePouchContainer extends Container {
-    private final IItemHandler handler;
+    private final RunePouchInventory inventory;
     private final ItemStack pouchStack;
-    private final RunePouchItem pouchItem;
 
     public RunePouchContainer(int id, PlayerInventory inv, Hand hand) {
         super(ModContainers.RUNE_POUCH.get(), id);
         this.pouchStack = inv.player.getHeldItem(hand);
-        this.pouchItem = (RunePouchItem) pouchStack.getItem();
-
-        // 优先使用Capability（如果存在），否则直接NBT
-        this.handler = pouchStack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
-                .orElseGet(() -> pouchItem.getHandler(pouchStack));
+        this.inventory = (RunePouchInventory) pouchStack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
+                .orElseThrow(() -> new IllegalStateException("Missing RunePouchInventory"));
 
         // 符文袋格子：3行 × 9列
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 int index = row * 9 + col;
-                addSlot(new SlotItemHandler(handler, index, 8 + col * 18, 18 + row * 18));
+                addSlot(new SlotItemHandler(inventory.getHandler(), index, 8 + col * 18, 18 + row * 18));
             }
         }
 
@@ -53,12 +48,12 @@ public class RunePouchContainer extends Container {
         if (slot != null && slot.getHasStack()) {
             ItemStack stackInSlot = slot.getStack();
             ItemStack copy = stackInSlot.copy();
-            if (index < RunePouchItem.SLOTS) {
-                if (!this.mergeItemStack(stackInSlot, RunePouchItem.SLOTS, this.inventorySlots.size(), true)) {
+            if (index < RunePouchInventory.SLOTS) {
+                if (!this.mergeItemStack(stackInSlot, RunePouchInventory.SLOTS, this.inventorySlots.size(), true)) {
                     return ItemStack.EMPTY;
                 }
             } else {
-                if (!this.mergeItemStack(stackInSlot, 0, RunePouchItem.SLOTS, false)) {
+                if (!this.mergeItemStack(stackInSlot, 0, RunePouchInventory.SLOTS, false)) {
                     return ItemStack.EMPTY;
                 }
             }
@@ -67,10 +62,7 @@ public class RunePouchContainer extends Container {
             } else {
                 slot.onSlotChanged();
             }
-            // 强制保存（如果handler是ItemStackHandler）
-            if (handler instanceof net.minecraftforge.items.ItemStackHandler) {
-                pouchItem.saveHandler(pouchStack, (net.minecraftforge.items.ItemStackHandler) handler);
-            }
+            inventory.save(); // 每次转移后保存
             return copy;
         }
         return ItemStack.EMPTY;
@@ -80,17 +72,15 @@ public class RunePouchContainer extends Container {
     public boolean canInteractWith(PlayerEntity player) {
         ItemStack main = player.getHeldItemMainhand();
         ItemStack off = player.getHeldItemOffhand();
-        return main.getItem() instanceof RunePouchItem || off.getItem() instanceof RunePouchItem;
+        return main.getItem() instanceof com.example.runepouch.item.RunePouchItem ||
+               off.getItem() instanceof com.example.runepouch.item.RunePouchItem;
     }
 
     @Override
     public void onContainerClosed(PlayerEntity player) {
         super.onContainerClosed(player);
         if (!player.world.isRemote) {
-            // 关闭时保存
-            if (handler instanceof net.minecraftforge.items.ItemStackHandler) {
-                pouchItem.saveHandler(pouchStack, (net.minecraftforge.items.ItemStackHandler) handler);
-            }
+            inventory.save();
         }
     }
 }
