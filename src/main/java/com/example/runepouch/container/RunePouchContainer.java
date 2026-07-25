@@ -7,25 +7,32 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.Hand;
 import net.minecraftforge.items.CapabilityItemHandler;
+import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.SlotItemHandler;
 
 public class RunePouchContainer extends Container {
+    private final IItemHandler handler;
     private final RunePouchInventory inventory;
     private final ItemStack pouchStack;
 
     public RunePouchContainer(int id, PlayerInventory inv, Hand hand) {
         super(ModContainers.RUNE_POUCH.get(), id);
         this.pouchStack = inv.player.getHeldItem(hand);
-        this.inventory = (RunePouchInventory) pouchStack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
-                .orElseThrow(() -> new IllegalStateException("Missing RunePouchInventory"));
+        // 直接从 Capability 获取 IItemHandler
+        this.handler = pouchStack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
+                .orElseThrow(() -> new IllegalStateException("Missing capability"));
+        // 通过 handler 获取其所属的 Inventory（需要在 RunePouchInventory 中添加 getter）
+        // 但由于我们无法从 IItemHandler 直接获取 Inventory，我们改为在保存时重新获取
+        this.inventory = null; // 不再直接持有 Inventory，改用静态方法保存
 
         // 符文袋格子：3行 × 9列
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 int index = row * 9 + col;
-                addSlot(new SlotItemHandler(inventory.getHandler(), index, 8 + col * 18, 18 + row * 18));
+                addSlot(new SlotItemHandler(handler, index, 8 + col * 18, 18 + row * 18));
             }
         }
 
@@ -40,6 +47,19 @@ public class RunePouchContainer extends Container {
         for (int col = 0; col < 9; col++) {
             addSlot(new Slot(inv, col, 8 + col * 18, 142));
         }
+    }
+
+    // 保存数据的辅助方法
+    private void saveInventory() {
+        // 每次保存时重新获取 Inventory 并保存
+        pouchStack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
+                .ifPresent(h -> {
+                    if (h instanceof net.minecraftforge.items.ItemStackHandler) {
+                        // 由于我们无法直接获取 RunePouchInventory，我们直接通过 NBT 保存
+                        CompoundNBT tag = pouchStack.getOrCreateTag();
+                        tag.put("Inventory", ((net.minecraftforge.items.ItemStackHandler) h).serializeNBT());
+                    }
+                });
     }
 
     @Override
@@ -62,7 +82,8 @@ public class RunePouchContainer extends Container {
             } else {
                 slot.onSlotChanged();
             }
-            inventory.save(); // 每次转移后保存
+            // 保存数据
+            saveInventory();
             return copy;
         }
         return ItemStack.EMPTY;
@@ -80,7 +101,7 @@ public class RunePouchContainer extends Container {
     public void onContainerClosed(PlayerEntity player) {
         super.onContainerClosed(player);
         if (!player.world.isRemote) {
-            inventory.save();
+            saveInventory();
         }
     }
 }
