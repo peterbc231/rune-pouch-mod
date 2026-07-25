@@ -17,18 +17,16 @@ public class CurioProvider implements ICapabilityProvider {
 
     public CurioProvider(ItemStack stack) {
         this.curioOptional = LazyOptional.of(() -> new ICurio() {
-            @Override
+            // 不加 @Override，直接实现接口方法
             public boolean canEquip(SlotContext slotContext, ItemStack stack) {
                 // 只允许放入 "back" 槽位
                 return slotContext.getIdentifier().equals("back");
             }
 
-            @Override
             public boolean canUnequip(SlotContext slotContext, ItemStack stack) {
                 return true;
             }
 
-            @Override
             public boolean canEquipFromUse(SlotContext slotContext, ItemStack stack) {
                 return true;
             }
