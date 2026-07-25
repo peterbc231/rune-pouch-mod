@@ -7,11 +7,15 @@ import com.example.runepouch.init.ModItems;
 import net.minecraft.client.gui.ScreenManager;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import top.theillusivec4.curios.api.SlotTypeMessage;
+import top.theillusivec4.curios.api.SlotTypePreset;
 
 @Mod(RunePouchMod.MOD_ID)
 public class RunePouchMod {
@@ -23,6 +27,7 @@ public class RunePouchMod {
         ModItems.ITEMS.register(bus);
         ModContainers.CONTAINERS.register(bus);
         bus.addListener(this::clientSetup);
+        bus.addListener(this::enqueueIMC);
         MinecraftForge.EVENT_BUS.register(new ItemEventHandler());
     }
 
@@ -30,5 +35,16 @@ public class RunePouchMod {
         event.enqueueWork(() -> {
             ScreenManager.registerFactory(ModContainers.RUNE_POUCH.get(), RunePouchScreen::new);
         });
+    }
+
+    // 使用 InterModComms 向 Curios API 注册槽位（推荐方式）
+    private void enqueueIMC(final InterModEnqueueEvent event) {
+        // 使用预设的 "back" 槽位，也可以通过 SlotTypeMessage.Builder 自定义
+        InterModComms.sendTo("curios", SlotTypeMessage.REGISTER_TYPE,
+                () -> SlotTypePreset.BACK.getMessageBuilder()
+                        // 可选：设置槽位大小、图标等
+                        .size(1)
+                        .build());
+        LOGGER.info("Registered curios slot: back");
     }
 }
