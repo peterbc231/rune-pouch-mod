@@ -5,7 +5,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import top.theillusivec4.curios.api.SlotContext;
 import top.theillusivec4.curios.api.type.capability.ICurioItem;
 
 import javax.annotation.Nullable;
@@ -14,7 +13,7 @@ public class RunePouchItem extends Item implements ICurioItem {
     public RunePouchItem() {
         super(new Properties()
                 .maxStackSize(1)      // 只能堆叠1个
-                .durability(500)      // 500耐久
+                .maxDamage(500)       // 500耐久（正确方法名）
                 .setNoRepair()        // 不能修复（可选）
         );
     }
@@ -59,16 +58,6 @@ public class RunePouchItem extends Item implements ICurioItem {
     public boolean isDamageable(ItemStack stack) {
         return true;
     }
-
-    // ========== Curios API 集成 ==========
-    @Override
-    public boolean canEquip(SlotContext slotContext, ItemStack stack) {
-        // 只允许放入 back 槽
-        return slotContext.getIdentifier().equals("back");
-    }
-
-    @Override
-    public boolean canUnequip(SlotContext slotContext, ItemStack stack) {
-        return true;
-    }
+    // ========== 不重写 canEquip/canUnequip，使用默认行为 ==========
+    // 默认即可放入任何槽位，配合数据包限制，实际只能放入 back 槽
 }
