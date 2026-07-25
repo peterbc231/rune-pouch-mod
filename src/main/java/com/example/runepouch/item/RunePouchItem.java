@@ -12,14 +12,15 @@ import javax.annotation.Nullable;
 public class RunePouchItem extends Item implements ICurioItem {
     public RunePouchItem() {
         super(new Properties()
-                .maxStackSize(1)      // 只能堆叠1个
-                .maxDamage(500)       // 500耐久（正确方法名）
-                .setNoRepair()        // 不能修复（可选）
+                .maxStackSize(1)
+                .maxDamage(500)
+                .setNoRepair()
         );
     }
 
     public RunePouchItem(Properties properties) {
-        super(properties);
+        // 强制覆盖堆叠和耐久，无论外部传入什么
+        super(properties.maxStackSize(1).maxDamage(500));
     }
 
     @Nullable
@@ -53,11 +54,8 @@ public class RunePouchItem extends Item implements ICurioItem {
         super.readShareTag(stack, nbt);
     }
 
-    // 强制显示耐久条
     @Override
     public boolean isDamageable(ItemStack stack) {
         return true;
     }
-    // ========== 不重写 canEquip/canUnequip，使用默认行为 ==========
-    // 默认即可放入任何槽位，配合数据包限制，实际只能放入 back 槽
 }
