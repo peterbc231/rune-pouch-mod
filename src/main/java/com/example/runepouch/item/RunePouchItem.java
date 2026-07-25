@@ -5,7 +5,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import top.theillusivec4.curios.api.SlotContext;
 import top.theillusivec4.curios.api.type.capability.ICurioItem;
 
 import javax.annotation.Nullable;
@@ -48,23 +47,5 @@ public class RunePouchItem extends Item implements ICurioItem {
                     });
         }
         super.readShareTag(stack, nbt);
-    }
-
-    // ========== Curios API 集成 ==========
-    @Override
-    public boolean canEquip(SlotContext slotContext, ItemStack stack) {
-        // 返回 true 表示允许穿戴
-        return true;
-    }
-
-    @Override
-    public boolean canUnequip(SlotContext slotContext, ItemStack stack) {
-        // 返回 true 表示允许脱下
-        return true;
-    }
-
-    @Override
-    public void curioTick(SlotContext slotContext, ItemStack stack) {
-        // 每个游戏刻调用，可添加持续效果（暂不实现）
     }
 }
