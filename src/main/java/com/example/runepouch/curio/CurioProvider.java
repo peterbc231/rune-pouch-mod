@@ -38,25 +38,16 @@ public class CurioProvider implements ICapabilityProvider {
                                IRenderTypeBuffer renderTypeBuffer, int light, LivingEntity livingEntity,
                                float limbSwing, float limbSwingAmount, float partialTicks,
                                float ageInTicks, float netHeadYaw, float headPitch) {
+                // 使用不死图腾的渲染逻辑（完全相同的调用）
                 ICurio.RenderHelper.translateIfSneaking(matrixStack, livingEntity);
                 ICurio.RenderHelper.rotateIfSneaking(matrixStack, livingEntity);
                 matrixStack.scale(0.35F, 0.35F, 0.35F);
                 matrixStack.translate(0.0F, 0.5F, -0.4F);
                 matrixStack.rotate(Direction.DOWN.getRotation());
-                Minecraft.getInstance().getItemRenderer()
-                        .renderItemStack(null, stack, ItemCameraTransforms.TransformType.NONE,
-                                false, matrixStack, renderTypeBuffer, light, OverlayTexture.NO_OVERLAY);
-            }
-
-            // 可选：限制槽位
-            @Override
-            public boolean canEquip(SlotContext slotContext, ItemStack stack) {
-                return true; // 允许任何槽位
-            }
-
-            @Override
-            public boolean canUnequip(SlotContext slotContext, ItemStack stack) {
-                return true;
+                // 1.16.5 的 ItemRenderer.renderItem 正确签名
+                Minecraft.getInstance().getItemRenderer().renderItem(stack,
+                        ItemCameraTransforms.TransformType.NONE, light, OverlayTexture.NO_OVERLAY,
+                        matrixStack, renderTypeBuffer);
             }
         });
     }
