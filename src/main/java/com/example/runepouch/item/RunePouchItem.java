@@ -13,14 +13,12 @@ import javax.annotation.Nullable;
 import java.util.Locale;
 
 public class RunePouchItem extends Item {
-    public static final int SLOTS = 27;
+    public static final int SLOTS = 27;  // 现在是27格
 
-    // 无参构造（默认耐久500，堆叠1）
     public RunePouchItem() {
         super(new Properties().maxStackSize(1).maxDamage(500));
     }
 
-    // 带参构造（支持自定义属性，如创造标签页）
     public RunePouchItem(Properties properties) {
         super(properties);
     }
@@ -62,21 +60,32 @@ public class RunePouchItem extends Item {
         };
     }
 
+    // ========== 关键修复：完整的序列化/反序列化 ==========
     @Override
     public CompoundNBT getShareTag(ItemStack stack) {
         CompoundNBT tag = stack.getOrCreateTag();
+        // 保存 Capability 数据
         stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
                 .filter(h -> h instanceof ItemStackHandler)
-                .ifPresent(h -> tag.put("Inventory", ((ItemStackHandler) h).serializeNBT()));
+                .ifPresent(h -> {
+                    CompoundNBT invTag = ((ItemStackHandler) h).serializeNBT();
+                    tag.put("Inventory", invTag);
+                });
+        // 保存物品本身的 NBT（比如耐久值等）
         return tag;
     }
 
     @Override
     public void readShareTag(ItemStack stack, @Nullable CompoundNBT nbt) {
-        if (nbt != null && nbt.contains("Inventory")) {
-            stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
-                    .filter(h -> h instanceof ItemStackHandler)
-                    .ifPresent(h -> ((ItemStackHandler) h).deserializeNBT(nbt.getCompound("Inventory")));
+        if (nbt != null) {
+            // 先恢复 Capability 数据
+            if (nbt.contains("Inventory")) {
+                stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
+                        .filter(h -> h instanceof ItemStackHandler)
+                        .ifPresent(h -> ((ItemStackHandler) h).deserializeNBT(nbt.getCompound("Inventory")));
+            }
+            // 恢复其他 NBT 数据（耐久等）
+            stack.setTag(nbt);
         }
         super.readShareTag(stack, nbt);
     }
