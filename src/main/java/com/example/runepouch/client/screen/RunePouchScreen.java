@@ -9,12 +9,13 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 
 public class RunePouchScreen extends ContainerScreen<RunePouchContainer> {
-    private static final ResourceLocation BG = new ResourceLocation("minecraft", "textures/gui/container/generic_54.png");
+    // 使用原版潜影盒纹理（小箱子风格）
+    private static final ResourceLocation BG = new ResourceLocation("minecraft", "textures/gui/container/shulker_box.png");
 
     public RunePouchScreen(RunePouchContainer container, PlayerInventory inv, ITextComponent title) {
         super(container, inv, title);
         this.xSize = 176;
-        this.ySize = 300;  // 恢复为原版大箱子完整高度
+        this.ySize = 166;   // 原版潜影盒高度，完整显示所有行
     }
 
     @Override
@@ -23,8 +24,8 @@ public class RunePouchScreen extends ContainerScreen<RunePouchContainer> {
         this.minecraft.getTextureManager().bindTexture(BG);
         int x = (this.width - this.xSize) / 2;
         int y = (this.height - this.ySize) / 2;
-        // 从纹理的 (0,0) 开始绘制，但只绘制到 ySize，让底部装饰完整出现
-        this.blit(matrixStack, x, y, 0, 80, this.xSize, this.ySize);
+        // 从纹理左上角开始截取完整176x166区域
+        this.blit(matrixStack, x, y, 0, 0, this.xSize, this.ySize);
     }
 
     @Override
@@ -37,7 +38,6 @@ public class RunePouchScreen extends ContainerScreen<RunePouchContainer> {
     @Override
     protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int mouseX, int mouseY) {
         this.font.drawString(matrixStack, this.title.getString(), 8.0F, 6.0F, 4210752);
-        // "物品栏"文字放在原版位置（Y=72）
         this.font.drawString(matrixStack, this.playerInventory.getDisplayName().getString(), 8.0F, 72.0F, 4210752);
     }
 }

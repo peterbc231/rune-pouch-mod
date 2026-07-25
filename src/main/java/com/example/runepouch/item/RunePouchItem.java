@@ -13,7 +13,7 @@ import javax.annotation.Nullable;
 import java.util.Locale;
 
 public class RunePouchItem extends Item {
-    public static final int SLOTS = 18;
+    public static final int SLOTS = 27;
 
     // 无参构造（默认耐久500，堆叠1）
     public RunePouchItem() {
