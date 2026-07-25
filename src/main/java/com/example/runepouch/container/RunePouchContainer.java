@@ -2,8 +2,10 @@ package com.example.runepouch.container;
 
 import com.example.runepouch.init.ModContainers;
 import com.example.runepouch.inventory.RunePouchInventory;
+import com.example.runepouch.inventory.container.slot.DisabledSlot;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.container.ClickType;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
@@ -15,18 +17,15 @@ import net.minecraftforge.items.SlotItemHandler;
 
 public class RunePouchContainer extends Container {
     private final IItemHandler handler;
-    private final RunePouchInventory inventory;
     private final ItemStack pouchStack;
+    private final int currentItemIndex;
 
     public RunePouchContainer(int id, PlayerInventory inv, Hand hand) {
         super(ModContainers.RUNE_POUCH.get(), id);
         this.pouchStack = inv.player.getHeldItem(hand);
-        // 直接从 Capability 获取 IItemHandler
         this.handler = pouchStack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
                 .orElseThrow(() -> new IllegalStateException("Missing capability"));
-        // 通过 handler 获取其所属的 Inventory（需要在 RunePouchInventory 中添加 getter）
-        // 但由于我们无法从 IItemHandler 直接获取 Inventory，我们改为在保存时重新获取
-        this.inventory = null; // 不再直接持有 Inventory，改用静态方法保存
+        this.currentItemIndex = inv.selected;
 
         // 符文袋格子：3行 × 9列
         for (int row = 0; row < 3; row++) {
@@ -43,19 +42,38 @@ public class RunePouchContainer extends Container {
             }
         }
 
-        // 快捷栏：1行
+        // 快捷栏：1行（禁用当前手持槽）
         for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(inv, col, 8 + col * 18, 142));
+            int slotIndex = col;
+            int x = 8 + col * 18;
+            int y = 142;
+            if (col == currentItemIndex) {
+                // 如果当前手持的是符文袋，禁用该槽
+                addSlot(new DisabledSlot(inv, col, x, y));
+            } else {
+                addSlot(new Slot(inv, col, x, y));
+            }
         }
     }
 
-    // 保存数据的辅助方法
+    // 拦截 SWAP 点击（数字键交换）
+    @Override
+    public ItemStack clicked(int slotId, int dragType, ClickType clickType, PlayerEntity player) {
+        if (clickType == ClickType.SWAP) {
+            // 防止把符文袋从手中换到其他位置
+            ItemStack stack = player.inventory.getItem(dragType);
+            ItemStack currentItem = player.inventory.getSelected();
+            if (!currentItem.isEmpty() && stack == currentItem) {
+                return ItemStack.EMPTY;
+            }
+        }
+        return super.clicked(slotId, dragType, clickType, player);
+    }
+
     private void saveInventory() {
-        // 每次保存时重新获取 Inventory 并保存
         pouchStack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
                 .ifPresent(h -> {
                     if (h instanceof net.minecraftforge.items.ItemStackHandler) {
-                        // 由于我们无法直接获取 RunePouchInventory，我们直接通过 NBT 保存
                         CompoundNBT tag = pouchStack.getOrCreateTag();
                         tag.put("Inventory", ((net.minecraftforge.items.ItemStackHandler) h).serializeNBT());
                     }
@@ -82,7 +100,6 @@ public class RunePouchContainer extends Container {
             } else {
                 slot.onSlotChanged();
             }
-            // 保存数据
             saveInventory();
             return copy;
         }
