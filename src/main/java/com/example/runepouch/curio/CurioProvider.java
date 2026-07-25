@@ -1,5 +1,11 @@
 package com.example.runepouch.curio;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
@@ -17,16 +23,39 @@ public class CurioProvider implements ICapabilityProvider {
 
     public CurioProvider(ItemStack stack) {
         this.curioOptional = LazyOptional.of(() -> new ICurio() {
-            // 暂时允许所有槽位，测试能否放入
+            @Override
+            public boolean canEquipFromUse(SlotContext ctx) {
+                return true;
+            }
+
+            @Override
+            public boolean canRender(String identifier, int index, LivingEntity livingEntity) {
+                return true;
+            }
+
+            @Override
+            public void render(String identifier, int index, MatrixStack matrixStack,
+                               IRenderTypeBuffer renderTypeBuffer, int light, LivingEntity livingEntity,
+                               float limbSwing, float limbSwingAmount, float partialTicks,
+                               float ageInTicks, float netHeadYaw, float headPitch) {
+                ICurio.RenderHelper.translateIfSneaking(matrixStack, livingEntity);
+                ICurio.RenderHelper.rotateIfSneaking(matrixStack, livingEntity);
+                matrixStack.scale(0.35F, 0.35F, 0.35F);
+                matrixStack.translate(0.0F, 0.5F, -0.4F);
+                matrixStack.rotate(Direction.DOWN.getRotation());
+                Minecraft.getInstance().getItemRenderer()
+                        .renderItemStack(null, stack, ItemCameraTransforms.TransformType.NONE,
+                                false, matrixStack, renderTypeBuffer, light, OverlayTexture.NO_OVERLAY);
+            }
+
+            // 可选：限制槽位
+            @Override
             public boolean canEquip(SlotContext slotContext, ItemStack stack) {
                 return true; // 允许任何槽位
             }
 
+            @Override
             public boolean canUnequip(SlotContext slotContext, ItemStack stack) {
-                return true;
-            }
-
-            public boolean canEquipFromUse(SlotContext slotContext, ItemStack stack) {
                 return true;
             }
         });

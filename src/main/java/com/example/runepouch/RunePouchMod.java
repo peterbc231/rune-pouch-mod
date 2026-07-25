@@ -34,7 +34,6 @@ public class RunePouchMod {
         bus.addListener(this::clientSetup);
         bus.addListener(this::enqueueIMC);
         MinecraftForge.EVENT_BUS.register(new ItemEventHandler());
-        // 监听物品能力附加事件，用于动态绑定饰品能力（模仿 CurioOfUndying）
         MinecraftForge.EVENT_BUS.addGenericListener(ItemStack.class, this::attachCapabilities);
     }
 
@@ -46,16 +45,14 @@ public class RunePouchMod {
 
     private void enqueueIMC(final InterModEnqueueEvent event) {
         InterModComms.sendTo("curios", SlotTypeMessage.REGISTER_TYPE,
-                () -> SlotTypePreset.BACK.getMessageBuilder()
-                        .size(1)
-                        .build());
-        LOGGER.info("Registered curios slot: back");
+                () -> SlotTypePreset.CHARM.getMessageBuilder().build()); // 使用护符槽测试
+        LOGGER.info("Registered curios slot: charm");
     }
 
     private void attachCapabilities(AttachCapabilitiesEvent<ItemStack> event) {
         ItemStack stack = event.getObject();
         if (stack.getItem() instanceof RunePouchItem) {
-            // 关键修复：使用 CuriosCapability.ID_ITEM 而不是自定义 ID
+            // 使用和不死图腾完全相同的 Capability ID
             event.addCapability(CuriosCapability.ID_ITEM, new CurioProvider(stack));
         }
     }
