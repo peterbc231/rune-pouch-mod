@@ -92,7 +92,7 @@ public class RunePouchItem extends Item {
             // 将剩余的 NBT 设置到物品上（比如耐久、Dirty 标记等）
             // 注意：不要直接 setTag，而是合并
             CompoundNBT currentTag = stack.getOrCreateTag();
-            for (String key : nbt.getAllKeys()) {
+            for (String key : nbt.keySet()) {
                 if (!key.equals("Inventory")) {
                     currentTag.put(key, nbt.get(key));
                 }
