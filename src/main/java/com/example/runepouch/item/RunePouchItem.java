@@ -55,14 +55,12 @@ public class RunePouchItem extends Item implements ICurioItem {
         return true;
     }
 
-    // ========== Curios API 核心方法 ==========
-    @Override
+    // ========== Curios API 核心方法（无 @Override，避免编译冲突） ==========
+    // 只允许放入 "back" 槽位
     public boolean canEquip(SlotContext slotContext, ItemStack stack) {
-        // 明确允许放入任何槽位
-        return true;
+        return slotContext.getIdentifier().equals("back");
     }
 
-    @Override
     public boolean canUnequip(SlotContext slotContext, ItemStack stack) {
         return true;
     }
