@@ -14,7 +14,7 @@ public class RunePouchScreen extends ContainerScreen<RunePouchContainer> {
     public RunePouchScreen(RunePouchContainer container, PlayerInventory inv, ITextComponent title) {
         super(container, inv, title);
         this.xSize = 176;
-        this.ySize = 166;  // 恢复为原版大箱子完整高度
+        this.ySize = 300;  // 恢复为原版大箱子完整高度
     }
 
     @Override
@@ -24,7 +24,7 @@ public class RunePouchScreen extends ContainerScreen<RunePouchContainer> {
         int x = (this.width - this.xSize) / 2;
         int y = (this.height - this.ySize) / 2;
         // 从纹理的 (0,0) 开始绘制，但只绘制到 ySize，让底部装饰完整出现
-        this.blit(matrixStack, x, y, 0, 0, this.xSize, this.ySize);
+        this.blit(matrixStack, x, y, 0, 80, this.xSize, this.ySize);
     }
 
     @Override
