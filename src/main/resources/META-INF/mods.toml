@@ -12,7 +12,7 @@ description="A pouch for carrying runes. Supports Curios API."
 [[dependencies.runepouch]]
 modId="curios"
 mandatory=true
-versionRange="[4.0.0,)"
+versionRange="*"
 ordering="AFTER"
 side="BOTH"
 
