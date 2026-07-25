@@ -67,7 +67,7 @@ repositories {
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-    implementation fg.deobf("maven.modrinth:vvuO3ImH:5qPuCFYD")
+    compileOnly fg.deobf("maven.modrinth:vvuO3ImH:5qPuCFYD")
 }
 
 def resourceTargets = ['META-INF/mods.toml', 'pack.mcmeta']

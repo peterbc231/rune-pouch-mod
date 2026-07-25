@@ -1,10 +1,31 @@
 modLoader="javafml"
 loaderVersion="[36,)"
-license="All rights reserved"
+license="MIT"
 
 [[mods]]
 modId="runepouch"
 version="1.0.0"
 displayName="Rune Pouch"
-authors="Termux_Dev"
-description="A pouch to carry all your runes. Holds 18 runes (9x2)."
+authors="peterbc231"
+description="A pouch for carrying runes. Supports Curios API."
+
+[[dependencies.runepouch]]
+modId="curios"
+mandatory=true
+versionRange="[4.0.0,)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.runepouch]]
+modId="forge"
+mandatory=true
+versionRange="[36,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.runepouch]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.16.5,1.17)"
+ordering="NONE"
+side="BOTH"
