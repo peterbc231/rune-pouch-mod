@@ -11,15 +11,10 @@ import javax.annotation.Nullable;
 
 public class RunePouchItem extends Item implements ICurioItem {
     public RunePouchItem() {
-        super(new Properties()
-                .maxStackSize(1)
-                .maxDamage(500)
-                .setNoRepair()
-        );
+        super(new Properties().maxStackSize(1).maxDamage(500));
     }
 
     public RunePouchItem(Properties properties) {
-        // 强制覆盖堆叠和耐久，无论外部传入什么
         super(properties.maxStackSize(1).maxDamage(500));
     }
 
