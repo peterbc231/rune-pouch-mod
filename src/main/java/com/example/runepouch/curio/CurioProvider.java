@@ -17,8 +17,9 @@ public class CurioProvider implements ICapabilityProvider {
 
     public CurioProvider(ItemStack stack) {
         this.curioOptional = LazyOptional.of(() -> new ICurio() {
+            // 暂时允许所有槽位，测试能否放入
             public boolean canEquip(SlotContext slotContext, ItemStack stack) {
-                return slotContext.getIdentifier().equals("back");
+                return true; // 允许任何槽位
             }
 
             public boolean canUnequip(SlotContext slotContext, ItemStack stack) {

@@ -8,7 +8,6 @@ import com.example.runepouch.init.ModItems;
 import com.example.runepouch.item.RunePouchItem;
 import net.minecraft.client.gui.ScreenManager;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -19,6 +18,7 @@ import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import top.theillusivec4.curios.api.CuriosCapability;
 import top.theillusivec4.curios.api.SlotTypeMessage;
 import top.theillusivec4.curios.api.SlotTypePreset;
 
@@ -55,7 +55,8 @@ public class RunePouchMod {
     private void attachCapabilities(AttachCapabilitiesEvent<ItemStack> event) {
         ItemStack stack = event.getObject();
         if (stack.getItem() instanceof RunePouchItem) {
-            event.addCapability(new ResourceLocation(MOD_ID, "curio"), new CurioProvider(stack));
+            // 关键修复：使用 CuriosCapability.ID_ITEM 而不是自定义 ID
+            event.addCapability(CuriosCapability.ID_ITEM, new CurioProvider(stack));
         }
     }
 }
