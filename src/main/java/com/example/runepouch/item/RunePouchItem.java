@@ -13,7 +13,7 @@ import javax.annotation.Nullable;
 import java.util.Locale;
 
 public class RunePouchItem extends Item {
-    public static final int SLOTS = 27;  // 现在是27格
+    public static final int SLOTS = 27;
 
     public RunePouchItem() {
         super(new Properties().maxStackSize(1).maxDamage(500));
@@ -30,6 +30,7 @@ public class RunePouchItem extends Item {
             private final ItemStackHandler handler = new ItemStackHandler(SLOTS) {
                 @Override
                 protected void onContentsChanged(int slot) {
+                    // 标记物品数据已更改，触发保存
                     stack.getOrCreateTag().putBoolean("Dirty", true);
                 }
 
@@ -43,6 +44,7 @@ public class RunePouchItem extends Item {
             };
             private final LazyOptional<ItemStackHandler> optional = LazyOptional.of(() -> handler);
 
+            // 如果传入的 nbt 有数据，立即恢复
             {
                 if (nbt != null && nbt.contains("Inventory")) {
                     handler.deserializeNBT(nbt.getCompound("Inventory"));
@@ -60,18 +62,19 @@ public class RunePouchItem extends Item {
         };
     }
 
-    // ========== 关键修复：完整的序列化/反序列化 ==========
+    // ========== 关键：正确处理掉落/捡起 ==========
     @Override
     public CompoundNBT getShareTag(ItemStack stack) {
+        // 获取当前物品的 NBT
         CompoundNBT tag = stack.getOrCreateTag();
-        // 保存 Capability 数据
+        // 从 Capability 获取 handler，序列化 Inventory 数据
         stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
                 .filter(h -> h instanceof ItemStackHandler)
                 .ifPresent(h -> {
                     CompoundNBT invTag = ((ItemStackHandler) h).serializeNBT();
                     tag.put("Inventory", invTag);
                 });
-        // 保存物品本身的 NBT（比如耐久值等）
+        // 返回完整的 NBT（包含 Inventory 和可能其他数据）
         return tag;
     }
 
@@ -79,14 +82,23 @@ public class RunePouchItem extends Item {
     public void readShareTag(ItemStack stack, @Nullable CompoundNBT nbt) {
         if (nbt != null) {
             // 先恢复 Capability 数据
-            if (nbt.contains("Inventory")) {
-                stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
-                        .filter(h -> h instanceof ItemStackHandler)
-                        .ifPresent(h -> ((ItemStackHandler) h).deserializeNBT(nbt.getCompound("Inventory")));
+            stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
+                    .filter(h -> h instanceof ItemStackHandler)
+                    .ifPresent(h -> {
+                        if (nbt.contains("Inventory")) {
+                            ((ItemStackHandler) h).deserializeNBT(nbt.getCompound("Inventory"));
+                        }
+                    });
+            // 将剩余的 NBT 设置到物品上（比如耐久、Dirty 标记等）
+            // 注意：不要直接 setTag，而是合并
+            CompoundNBT currentTag = stack.getOrCreateTag();
+            for (String key : nbt.getAllKeys()) {
+                if (!key.equals("Inventory")) {
+                    currentTag.put(key, nbt.get(key));
+                }
             }
-            // 恢复其他 NBT 数据（耐久等）
-            stack.setTag(nbt);
         }
+        // 调用父类方法，让超级逻辑处理（它也会调用 setTag，但我们已经合并了）
         super.readShareTag(stack, nbt);
     }
 }
