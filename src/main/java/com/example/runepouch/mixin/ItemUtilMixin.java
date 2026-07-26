@@ -26,9 +26,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import net.tslat.aoa3.util.PlayerUtil;
-import net.tslat.aoa3.content.item.armour.AdventArmour;
-
 @Mixin(targets = "net.tslat.aoa3.util.ItemUtil")
 public class ItemUtilMixin {
 
@@ -49,19 +46,10 @@ public class ItemUtilMixin {
         return GREED_ENCHANT;
     }
 
+    // 手动检测全套噩梦盔甲（不依赖AoA3内部API）
     private static boolean hasNightmareArmor(ServerPlayerEntity player) {
-        try {
-            AdventArmour.Type armourSet = PlayerUtil.getAdventPlayer(player).equipment().getCurrentFullArmourSet();
-            return armourSet == AdventArmour.Type.NIGHTMARE;
-        } catch (Exception e) {
-            // 如果调用失败，回退到手动检测
-            return isNightmareArmor(player);
-        }
-    }
-
-    // 手动检测全套噩梦盔甲（备用）
-    private static boolean isNightmareArmor(ServerPlayerEntity player) {
         boolean hasHelmet = false, hasChest = false, hasLegs = false, hasBoots = false;
+        // player.inventory.armor 是盔甲槽列表，顺序：feet, legs, chest, head
         for (ItemStack armor : player.inventory.armor) {
             if (armor.isEmpty()) continue;
             ResourceLocation regName = armor.getItem().getRegistryName();
@@ -117,7 +105,7 @@ public class ItemUtilMixin {
             int amount = entry.getValue();
             if (greed) amount += 2;
             if (archmage > 0) amount -= archmage;
-            if (nightmare) amount -= 1; // 噩梦盔甲全套减1
+            if (nightmare) amount -= 1;
             if (amount <= 0) amount = 1;
             actualNeeded.put(entry.getKey(), amount);
         }
