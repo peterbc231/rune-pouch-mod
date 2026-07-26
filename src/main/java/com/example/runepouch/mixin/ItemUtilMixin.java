@@ -5,6 +5,7 @@ import com.example.runepouch.item.RunePouchItem;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -46,19 +47,16 @@ public class ItemUtilMixin {
         return GREED_ENCHANT;
     }
 
-    // 检测全套噩梦盔甲（使用 getArmorItems）
+    // 检测全套噩梦盔甲（使用 EquipmentSlotType）
     private static boolean hasNightmareArmor(ServerPlayerEntity player) {
-        boolean hasHelmet = false, hasChest = false, hasLegs = false, hasBoots = false;
-        for (ItemStack armor : player.getArmorItems()) {
-            if (armor.isEmpty()) continue;
-            ResourceLocation regName = armor.getItem().getRegistryName();
-            if (regName == null) continue;
-            String path = regName.getPath();
-            if (path.startsWith("nightmare_helmet")) hasHelmet = true;
-            else if (path.startsWith("nightmare_chestplate")) hasChest = true;
-            else if (path.startsWith("nightmare_leggings")) hasLegs = true;
-            else if (path.startsWith("nightmare_boots")) hasBoots = true;
-        }
+        ItemStack helmet = player.getItemBySlot(EquipmentSlotType.HEAD);
+        ItemStack chest = player.getItemBySlot(EquipmentSlotType.CHEST);
+        ItemStack legs = player.getItemBySlot(EquipmentSlotType.LEGS);
+        ItemStack boots = player.getItemBySlot(EquipmentSlotType.FEET);
+        boolean hasHelmet = !helmet.isEmpty() && helmet.getItem().getRegistryName().getPath().startsWith("nightmare_helmet");
+        boolean hasChest = !chest.isEmpty() && chest.getItem().getRegistryName().getPath().startsWith("nightmare_chestplate");
+        boolean hasLegs = !legs.isEmpty() && legs.getItem().getRegistryName().getPath().startsWith("nightmare_leggings");
+        boolean hasBoots = !boots.isEmpty() && boots.getItem().getRegistryName().getPath().startsWith("nightmare_boots");
         return hasHelmet && hasChest && hasLegs && hasBoots;
     }
 
