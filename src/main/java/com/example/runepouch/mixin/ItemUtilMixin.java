@@ -26,6 +26,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import net.tslat.aoa3.util.PlayerUtil;
+import net.tslat.aoa3.content.item.armour.AdventArmour;
+
 @Mixin(targets = "net.tslat.aoa3.util.ItemUtil")
 public class ItemUtilMixin {
 
@@ -44,6 +47,32 @@ public class ItemUtilMixin {
             GREED_ENCHANT = ForgeRegistries.ENCHANTMENTS.getValue(new ResourceLocation("aoa3", "greed"));
         }
         return GREED_ENCHANT;
+    }
+
+    private static boolean hasNightmareArmor(ServerPlayerEntity player) {
+        try {
+            AdventArmour.Type armourSet = PlayerUtil.getAdventPlayer(player).equipment().getCurrentFullArmourSet();
+            return armourSet == AdventArmour.Type.NIGHTMARE;
+        } catch (Exception e) {
+            // 如果调用失败，回退到手动检测
+            return isNightmareArmor(player);
+        }
+    }
+
+    // 手动检测全套噩梦盔甲（备用）
+    private static boolean isNightmareArmor(ServerPlayerEntity player) {
+        boolean hasHelmet = false, hasChest = false, hasLegs = false, hasBoots = false;
+        for (ItemStack armor : player.inventory.armor) {
+            if (armor.isEmpty()) continue;
+            ResourceLocation regName = armor.getItem().getRegistryName();
+            if (regName == null) continue;
+            String path = regName.getPath();
+            if (path.startsWith("nightmare_helmet")) hasHelmet = true;
+            else if (path.startsWith("nightmare_chestplate")) hasChest = true;
+            else if (path.startsWith("nightmare_leggings")) hasLegs = true;
+            else if (path.startsWith("nightmare_boots")) hasBoots = true;
+        }
+        return hasHelmet && hasChest && hasLegs && hasBoots;
     }
 
     @Inject(method = "findAndConsumeRunes", at = @At("HEAD"), cancellable = true)
@@ -81,13 +110,14 @@ public class ItemUtilMixin {
         // 3. 计算实际消耗量（模拟 AoA3 的减免逻辑）
         int archmage = allowBuffs ? EnchantmentHelper.getEnchantmentLevel(getArchmage(), heldItem) : 0;
         boolean greed = allowBuffs && EnchantmentHelper.getEnchantmentLevel(getGreed(), heldItem) > 0;
+        boolean nightmare = allowBuffs && hasNightmareArmor(player);
 
         HashMap<Item, Integer> actualNeeded = new HashMap<>();
         for (Map.Entry<Item, Integer> entry : runeMap.entrySet()) {
             int amount = entry.getValue();
             if (greed) amount += 2;
             if (archmage > 0) amount -= archmage;
-            // 噩梦盔甲减免暂时忽略（可后续添加）
+            if (nightmare) amount -= 1; // 噩梦盔甲全套减1
             if (amount <= 0) amount = 1;
             actualNeeded.put(entry.getKey(), amount);
         }
