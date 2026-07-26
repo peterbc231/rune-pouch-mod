@@ -2,14 +2,17 @@ package com.example.runepouch.mixin;
 
 import com.example.runepouch.inventory.RunePouchInventory;
 import com.example.runepouch.item.RunePouchItem;
+import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -17,7 +20,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
 import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
-import net.tslat.aoa3.common.registration.AoAEnchantments;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
@@ -26,6 +28,23 @@ import java.util.Optional;
 
 @Mixin(targets = "net.tslat.aoa3.util.ItemUtil")
 public class ItemUtilMixin {
+
+    private static Enchantment ARCHMAGE_ENCHANT = null;
+    private static Enchantment GREED_ENCHANT = null;
+
+    private static Enchantment getArchmage() {
+        if (ARCHMAGE_ENCHANT == null) {
+            ARCHMAGE_ENCHANT = ForgeRegistries.ENCHANTMENTS.getValue(new ResourceLocation("aoa3", "archmage"));
+        }
+        return ARCHMAGE_ENCHANT;
+    }
+
+    private static Enchantment getGreed() {
+        if (GREED_ENCHANT == null) {
+            GREED_ENCHANT = ForgeRegistries.ENCHANTMENTS.getValue(new ResourceLocation("aoa3", "greed"));
+        }
+        return GREED_ENCHANT;
+    }
 
     @Inject(method = "findAndConsumeRunes", at = @At("HEAD"), cancellable = true)
     private static void onFindAndConsumeRunes(HashMap<Item, Integer> runeMap, ServerPlayerEntity player,
@@ -60,17 +79,15 @@ public class ItemUtilMixin {
         ItemStackHandler stackHandler = (ItemStackHandler) handler;
 
         // 3. 计算实际消耗量（模拟 AoA3 的减免逻辑）
-        // 获取附魔等级
-        int archmage = allowBuffs ? EnchantmentHelper.getEnchantmentLevel(AoAEnchantments.ARCHMAGE.get(), heldItem) : 0;
-        boolean greed = allowBuffs && EnchantmentHelper.getEnchantmentLevel(AoAEnchantments.GREED.get(), heldItem) > 0;
-        // 注意：噩梦盔甲减免暂时不考虑，因为需要检查全套盔甲，这里简化，可后续补充
+        int archmage = allowBuffs ? EnchantmentHelper.getEnchantmentLevel(getArchmage(), heldItem) : 0;
+        boolean greed = allowBuffs && EnchantmentHelper.getEnchantmentLevel(getGreed(), heldItem) > 0;
 
         HashMap<Item, Integer> actualNeeded = new HashMap<>();
         for (Map.Entry<Item, Integer> entry : runeMap.entrySet()) {
             int amount = entry.getValue();
             if (greed) amount += 2;
             if (archmage > 0) amount -= archmage;
-            // 噩梦盔甲减免在此忽略，如果你需要可以添加
+            // 噩梦盔甲减免暂时忽略（可后续添加）
             if (amount <= 0) amount = 1;
             actualNeeded.put(entry.getKey(), amount);
         }
@@ -85,7 +102,7 @@ public class ItemUtilMixin {
                 }
             }
             if (found < entry.getValue()) {
-                // 符文不足，走原逻辑（让 AoA3 去处理）
+                // 符文不足，走原逻辑
                 return;
             }
         }
@@ -111,7 +128,7 @@ public class ItemUtilMixin {
         // 7. 消耗符文袋耐久（每次施法扣1点）
         pouchStack.damageItem(1, player, (p) -> p.sendBreakAnimation(net.minecraft.util.Hand.MAIN_HAND));
 
-        // 8. 拦截原方法，返回 true（消耗成功）
+        // 8. 拦截原方法，返回 true（表示消耗成功）
         cir.setReturnValue(true);
     }
 }
