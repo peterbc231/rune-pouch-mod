@@ -3,7 +3,6 @@ package com.example.runepouch.event;
 import com.example.runepouch.item.RunePouchItem;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.enchantment.EnchantedBookItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.ResourceLocation;
@@ -31,7 +30,7 @@ public class RunePouchEnchantmentHandler {
 
         // 必须是符文袋 + 附魔书
         if (!(left.getItem() instanceof RunePouchItem)) return;
-        if (right.isEmpty() || !(right.getItem() instanceof EnchantedBookItem)) return;
+        if (right.isEmpty() || right.getItem() != Items.ENCHANTED_BOOK) return;
 
         Enchantment arch = getArchmage();
         if (arch == null) return;
