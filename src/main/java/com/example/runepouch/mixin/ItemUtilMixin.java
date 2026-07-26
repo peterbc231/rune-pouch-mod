@@ -46,10 +46,10 @@ public class ItemUtilMixin {
         return GREED_ENCHANT;
     }
 
-    // 检测全套噩梦盔甲（使用 getArmorSlots）
+    // 检测全套噩梦盔甲（使用 getArmorItems）
     private static boolean hasNightmareArmor(ServerPlayerEntity player) {
         boolean hasHelmet = false, hasChest = false, hasLegs = false, hasBoots = false;
-        for (ItemStack armor : player.getArmorSlots()) {
+        for (ItemStack armor : player.getArmorItems()) {
             if (armor.isEmpty()) continue;
             ResourceLocation regName = armor.getItem().getRegistryName();
             if (regName == null) continue;
