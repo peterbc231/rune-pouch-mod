@@ -5,10 +5,11 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import top.theillusivec4.curios.api.type.capability.ICurioItem;
 
 import javax.annotation.Nullable;
 
-public class RunePouchItem extends Item {
+public class RunePouchItem extends Item implements ICurioItem {
     public RunePouchItem() {
         super(new Properties().maxStackSize(1).maxDamage(500));
     }

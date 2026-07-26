@@ -1,11 +1,5 @@
 package com.example.runepouch.curio;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
@@ -28,28 +22,7 @@ public class CurioProvider implements ICapabilityProvider {
                 return true;
             }
 
-            // 允许渲染
-            public boolean canRender(String identifier, int index, LivingEntity livingEntity) {
-                return true;
-            }
-
-            // 渲染物品
-            public void render(String identifier, int index, MatrixStack matrixStack,
-                               IRenderTypeBuffer renderTypeBuffer, int light, LivingEntity livingEntity,
-                               float limbSwing, float limbSwingAmount, float partialTicks,
-                               float ageInTicks, float netHeadYaw, float headPitch) {
-                ICurio.RenderHelper.translateIfSneaking(matrixStack, livingEntity);
-                ICurio.RenderHelper.rotateIfSneaking(matrixStack, livingEntity);
-                matrixStack.scale(0.35F, 0.35F, 0.35F);
-                matrixStack.translate(0.0F, 0.5F, -0.4F);
-                matrixStack.rotate(Direction.DOWN.getRotation());
-                Minecraft.getInstance().getItemRenderer().renderItem(stack,
-                        ItemCameraTransforms.TransformType.NONE,
-                        light, OverlayTexture.NO_OVERLAY,
-                        matrixStack, renderTypeBuffer);
-            }
-
-            // 允许任何槽位（强制 true）
+            // 允许放入任何槽位
             public boolean canEquip(SlotContext slotContext, ItemStack stack) {
                 return true;
             }
@@ -58,6 +31,8 @@ public class CurioProvider implements ICapabilityProvider {
             public boolean canUnequip(SlotContext slotContext, ItemStack stack) {
                 return true;
             }
+
+            // 其他方法（如 render、canRender）不重写，使用默认空实现
         });
     }
 
