@@ -25,10 +25,10 @@ public class ItemEventHandler {
         if (stack.getItem() instanceof RunePouchItem) {
             event.setCanceled(true);
             if (!world.isRemote) {
-                stack.damageItem(1, player, (p) -> p.sendBreakAnimation(hand));
+                // 不再消耗耐久（移除 damageItem 调用）
                 NetworkHooks.openGui((ServerPlayerEntity) player, new SimpleNamedContainerProvider(
                         (id, inv, p) -> new RunePouchContainer(id, inv, hand),
-                        new StringTextComponent("符文袋")
+                        new StringTextComponent("Rune Pouch")
                 ), buf -> buf.writeEnumValue(hand));
             }
         }

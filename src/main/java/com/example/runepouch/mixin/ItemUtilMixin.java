@@ -27,15 +27,23 @@ public class ItemUtilMixin {
     private static void onFindAndConsumeRunes(HashMap<Item, Integer> runeMap, ServerPlayerEntity player,
                                                boolean allowBuffs, @Nonnull ItemStack heldItem,
                                                CallbackInfoReturnable<Boolean> cir) {
+        System.out.println("[RunePouch] findAndConsumeRunes called!");
+
         // 1. 获取护符栏中的符文袋
         ItemStack pouchStack = ItemStack.EMPTY;
         LazyOptional<ICuriosItemHandler> curiosOpt = CuriosApi.getCuriosHelper().getCuriosHandler(player);
-        if (!curiosOpt.isPresent()) return;
+        if (!curiosOpt.isPresent()) {
+            System.out.println("[RunePouch] No Curios handler found");
+            return;
+        }
         ICuriosItemHandler curios = curiosOpt.orElse(null);
         if (curios == null) return;
 
         Optional<ICurioStacksHandler> charmHandlerOpt = curios.getStacksHandler("charm");
-        if (!charmHandlerOpt.isPresent()) return;
+        if (!charmHandlerOpt.isPresent()) {
+            System.out.println("[RunePouch] No charm slot found");
+            return;
+        }
         ICurioStacksHandler charmHandler = charmHandlerOpt.get();
 
         IItemHandler charmInventory = charmHandler.getStacks();
@@ -43,10 +51,14 @@ public class ItemUtilMixin {
             ItemStack stack = charmInventory.getStackInSlot(i);
             if (stack.getItem() instanceof RunePouchItem) {
                 pouchStack = stack;
+                System.out.println("[RunePouch] Found pouch in charm slot!");
                 break;
             }
         }
-        if (pouchStack.isEmpty()) return;
+        if (pouchStack.isEmpty()) {
+            System.out.println("[RunePouch] No pouch found in charm slot");
+            return;
+        }
 
         // 2. 获取符文袋的 ItemStackHandler
         LazyOptional<IItemHandler> cap = pouchStack.getCapability(net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
@@ -63,7 +75,9 @@ public class ItemUtilMixin {
                     found += stack.getCount();
                 }
             }
+            System.out.println("[RunePouch] Need " + entry.getValue() + " of " + entry.getKey().getRegistryName() + ", found " + found);
             if (found < entry.getValue()) {
+                System.out.println("[RunePouch] Not enough runes in pouch, falling back to AoA3");
                 return; // 符文不足，走原逻辑
             }
         }
@@ -90,7 +104,11 @@ public class ItemUtilMixin {
                     }
                 });
 
-        // 6. 拦截原方法，返回 true
+        // 6. 消耗符文袋耐久（每次施法扣1点）
+        pouchStack.damageItem(1, player, (p) -> p.sendBreakAnimation(net.minecraft.util.Hand.MAIN_HAND));
+
+        System.out.println("[RunePouch] Successfully consumed runes from pouch!");
+        // 7. 拦截原方法，返回 true
         cir.setReturnValue(true);
     }
 }

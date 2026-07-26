@@ -1,0 +1,87 @@
+[33mfc9b103[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Remove large AoA3 JAR from repo, use .gitignore for libs
+[33md3b8b62[m Use local AoA3 JAR as dependency
+[33mc58d138[m[33m ([m[1;31morigin/main[m[33m)[m Fix build.gradle: add MixinBootstrap plugin
+[33m725d85d[m Add Mixin to intercept AoA3 rune consumption and prioritize rune pouch
+[33m885b117[m Only provide charm slot, restrict rune pouch to charm only
+[33m93e9f21[m Fix compile errors: remove @Override and implement ICurio methods
+[33me2d2173[m 完全对标Rings of Ascension：initCapabilities返回ICurio + 数据包Tag绑定
+[33m23bac9a[m Fix crash: remove manual Capability attachment, use ICurioItem only
+[33mfcdef32[m Simplify CurioProvider, add ICurioItem for double insurance
+[33mf4e7210[m Final Curios fix: register charm and back slots, force canEquip true
+[33mf082fa6[m Fix render method signature for 1.16.5
+[33mdcd1fd7[m Complete replication of CurioOfUndying's ICurio implementation
+[33mc53c48e[m Fix: use CuriosCapability.ID_ITEM for capability registration
+[33m8cce17e[m 完全模仿CurioOfUndying：通过AttachCapabilitiesEvent动态绑定饰品能力
+[33m417b6bb[m Remove @Override in CurioProvider for 1.16.5 compatibility
+[33maf83223[m Fix Curios integration by attaching capability dynamically (like CurioOfUndying)
+[33mdb71a9a[m Remove @Override for canEquip/canUnequip to fix compile
+[33m2b41537[m Add explicit canEquip/canUnequip for Curios API 1.16.5
+[33m4b109b3[m Remove canEquip/canUnequip overrides to fix compile error
+[33mcc2fe15[m Allow rune pouch to be equipped in any curios slot
+[33md969b7a[m Register curios slot using InterModComms instead of data files
+[33m4834d71[m Use built-in 'back' slot, remove custom slot definitions
+[33m0bd0fe9[m Fix Curios slot registration: use 'back' without namespace, rebuild all files
+[33me9c5e79[m Force maxStackSize=1 and maxDamage=500 in all constructors
+[33mb20aee2[m Fix compile errors: use maxDamage, remove canEquip/Unequip overrides
+[33mf261ad9[m Fix item properties and curios slot registration
+[33m5e70952[m Use simple slot ID 'back' without namespace
+[33me0be59f[m Set curios version range to wildcard for maximum compatibility
+[33m1b2f229[m Fix Curios integration: compileOnly, mods.toml dependency, correct data paths
+[33mbe666b7[m Remove overridden ICurioItem methods to fix compile error
+[33m7363f4b[m Fix build.gradle with correct Curios API dependency format
+[33mf3c66e5[m Add Curios API integration for back slot (v4.1.0.0)
+[33mc87d367[m Revert interaction protection due to API differences; keep stable container
+[33m3ec3a8a[m Add interaction protection: disable self-slot and intercept SWAP click
+[33m2f4063b[m Fix ClassCastException in container: use IItemHandler directly
+[33m04e58ad[m Refactor data storage to Traveler's Backpack style (Inventory class)
+[33m4f1a7be[m Add Capability support for mod compatibility while keeping direct NBT storage
+[33m4b9577a[m Add Capability support for mod compatibility while keeping direct NBT storage
+[33m1a617bb[m Fix: use keySet() instead of getAllKeys() for 1.16.5 compatibility
+[33m69548f2[m 彻底修复：掉落捡起后物品丢失问题
+[33m24ce2ee[m Fix: preserve inventory when item is dropped and picked up
+[33mffbb5c7[m Switch to shulker_box texture and 3x9 layout (27 slots)
+[33m94aa832[m 你的提交说明
+[33m5ae52aa[m Fix GUI: restore full window height, use original bag position with proper spacing
+[33m488cd44[m 你的提交说明
+[33m094846d[m Fix GUI: use correct drawGuiContainerForegroundLayer for 1.16.5
+[33m769668e[m Stable GUI text rendering using drawString
+[33m4dcd4f9[m Fix GUI: use renderLabels instead of inventoryLabelY
+[33mbdf4160[m Adapt GUI to vanilla large chest texture: 2x9 bag + 3x9 inv + 1x9 hotbar
+[33m881b2f1[m Add custom UI texture
+[33m4db1a12[m 你的提交说明，比如：修复UI或更新纹理
+[33med8a8de[m Add custom UI texture
+[33mad8646b[m Revert all test changes back to original state
+[33m9169d2b[m Force change rows to 1
+[33m9150087[m ci: upgrade upload-artifact to v6 for Node.js 24
+[33m9377013[m Fix row < ,3 syntax error
+[33mdeb5dba[m Fix Chinese comma to English comma
+[33m1dccb8f[m 修改说明
+[33me868b5f[m 修改说明
+[33m5dab09b[m Remove inventoryLabelY assignment to fix compile error
+[33mb6f3d9c[m Use generic_54.png with window height cropped to show only first 2 rows
+[33m9b46f9e[m Fix texture and UI: ensure correct paths and stable screen
+[33mf92fc92[m Final stable fix: add constructor with Properties, remove inventoryLabelY
+[33m2cbb48a[m Fix item texture path and filename
+[33mff4c00c[m Add custom item texture for rune pouch
+[33m2056e16[m Add missing ItemEventHandler class
+[33m44814e5[m Use event handler for right-click interaction
+[33mffbbbe8[m Fix ScreenManager method and remove Override definitively
+[33ma36ab6a[m Fix right-click: use ScreenManager.register and simplify use method
+[33m5a13844[m Remove @Override from initCapabilities definitively
+[33m935df85[m Fix final two errors: remove Override and inventoryLabelY
+[33md8737dc[m Final fix: writeEnumValue, readEnumValue, renderHoveredTooltip
+[33m371eb0c[m Rewrite all source code for Forge 1.16.5 API compatibility
+[33m3c6e3c1[m Switch to snapshot mappings for reliable download
+[33m37eec13[m Upgrade Gradle wrapper to 7.3 for FG5 compatibility
+[33md373060[m Remove foojay plugin and use Gradle 7.0.2 for compatibility
+[33mad8eb9f[m Downgrade Gradle wrapper to 6.9.4 for ForgeGradle compatibility
+[33m4feca75[m Replace build.gradle with stable version and complete gradle.properties
+[33mc140920[m Add ALL gradle properties to ensure build success
+[33m162b2bf[m Add mod_authors property
+[33m4e64a2d[m Fix: Add data persistence and durability consumption
+[33md73db38[m Add missing mapping_channel and mapping_version
+[33m1d66b3a[m Upgrade actions to v5 for Node.js 24 support
+[33m2cdde4f[m Add missing mod_group_id property
+[33m2871716[m Upgrade Actions to v4 (fix deprecated version error)
+[33m9a5149e[m Add GitHub Actions workflow
+[33m5441ebd[m[33m ([m[1;31morigin/master[m[33m)[m Initial commit: Rune Pouch mod for AoA3 3.6.11
