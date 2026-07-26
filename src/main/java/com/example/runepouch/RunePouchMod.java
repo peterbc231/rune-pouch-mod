@@ -38,10 +38,9 @@ public class RunePouchMod {
     }
 
     private void enqueueIMC(final InterModEnqueueEvent event) {
-        InterModComms.sendTo("curios", SlotTypeMessage.REGISTER_TYPE,
-                () -> SlotTypePreset.BACK.getMessageBuilder().build());
+        // 只注册护符槽位
         InterModComms.sendTo("curios", SlotTypeMessage.REGISTER_TYPE,
                 () -> SlotTypePreset.CHARM.getMessageBuilder().build());
-        LOGGER.info("Registered curios slots: charm, back");
+        LOGGER.info("Registered curios slot: charm");
     }
 }
