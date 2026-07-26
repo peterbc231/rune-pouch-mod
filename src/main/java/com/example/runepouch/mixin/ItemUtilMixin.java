@@ -5,8 +5,10 @@ import com.example.runepouch.item.RunePouchItem;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemStackHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -66,11 +68,18 @@ public class ItemUtilMixin {
         IItemHandler handler = cap.orElse(null);
         if (handler == null) return;
 
-        // 3. 检查符文袋中是否有所需符文
+        // 如果是 ItemStackHandler，直接操作
+        if (!(handler instanceof ItemStackHandler)) {
+            System.out.println("[RunePouch] Handler is not ItemStackHandler, falling back to AoA3");
+            return;
+        }
+        ItemStackHandler stackHandler = (ItemStackHandler) handler;
+
+        // 3. 检查符文袋中是否有所需符文（打印当前数量）
         for (Map.Entry<Item, Integer> entry : runeMap.entrySet()) {
             int found = 0;
-            for (int slot = 0; slot < handler.getSlots(); slot++) {
-                ItemStack stack = handler.getStackInSlot(slot);
+            for (int slot = 0; slot < stackHandler.getSlots(); slot++) {
+                ItemStack stack = stackHandler.getStackInSlot(slot);
                 if (!stack.isEmpty() && stack.getItem() == entry.getKey()) {
                     found += stack.getCount();
                 }
@@ -78,31 +87,29 @@ public class ItemUtilMixin {
             System.out.println("[RunePouch] Need " + entry.getValue() + " of " + entry.getKey().getRegistryName() + ", found " + found);
             if (found < entry.getValue()) {
                 System.out.println("[RunePouch] Not enough runes in pouch, falling back to AoA3");
-                return; // 符文不足，走原逻辑
+                return;
             }
         }
 
         // 4. 从符文袋扣除
         for (Map.Entry<Item, Integer> entry : runeMap.entrySet()) {
             int remaining = entry.getValue();
-            for (int slot = 0; slot < handler.getSlots(); slot++) {
-                ItemStack stack = handler.getStackInSlot(slot);
+            for (int slot = 0; slot < stackHandler.getSlots(); slot++) {
+                ItemStack stack = stackHandler.getStackInSlot(slot);
                 if (!stack.isEmpty() && stack.getItem() == entry.getKey()) {
                     int take = Math.min(remaining, stack.getCount());
                     stack.shrink(take);
+                    System.out.println("[RunePouch] Removed " + take + " of " + entry.getKey().getRegistryName() + " from slot " + slot);
                     remaining -= take;
                     if (remaining == 0) break;
                 }
             }
         }
 
-        // 5. 保存符文袋数据
-        pouchStack.getCapability(net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
-                .ifPresent(h -> {
-                    if (h instanceof RunePouchInventory) {
-                        ((RunePouchInventory) h).save();
-                    }
-                });
+        // 5. 强制保存到 NBT（直接用 NBT 操作，确保持久化）
+        CompoundNBT tag = pouchStack.getOrCreateTag();
+        tag.put("Inventory", stackHandler.serializeNBT());
+        System.out.println("[RunePouch] Saved to NBT, Inventory size: " + stackHandler.getSlots());
 
         // 6. 消耗符文袋耐久（每次施法扣1点）
         pouchStack.damageItem(1, player, (p) -> p.sendBreakAnimation(net.minecraft.util.Hand.MAIN_HAND));
