@@ -49,10 +49,10 @@ public class ItemUtilMixin {
 
     // 通过物品注册名检测全套噩梦盔甲（不依赖AoA3内部API）
     private static boolean hasNightmareArmor(ServerPlayerEntity player) {
-        ItemStack helmet = player.getItemBySlot(EquipmentSlotType.HEAD);
-        ItemStack chest = player.getItemBySlot(EquipmentSlotType.CHEST);
-        ItemStack legs = player.getItemBySlot(EquipmentSlotType.LEGS);
-        ItemStack boots = player.getItemBySlot(EquipmentSlotType.FEET);
+        ItemStack helmet = player.getItemStackFromSlot(EquipmentSlotType.HEAD);
+        ItemStack chest = player.getItemStackFromSlot(EquipmentSlotType.CHEST);
+        ItemStack legs = player.getItemStackFromSlot(EquipmentSlotType.LEGS);
+        ItemStack boots = player.getItemStackFromSlot(EquipmentSlotType.FEET);
         boolean hasHelmet = !helmet.isEmpty() && helmet.getItem().getRegistryName() != null && helmet.getItem().getRegistryName().getPath().startsWith("nightmare_helmet");
         boolean hasChest = !chest.isEmpty() && chest.getItem().getRegistryName() != null && chest.getItem().getRegistryName().getPath().startsWith("nightmare_chestplate");
         boolean hasLegs = !legs.isEmpty() && legs.getItem().getRegistryName() != null && legs.getItem().getRegistryName().getPath().startsWith("nightmare_leggings");
