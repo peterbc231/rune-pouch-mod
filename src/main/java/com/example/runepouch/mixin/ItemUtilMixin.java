@@ -1,37 +1,117 @@
 package com.example.runepouch.mixin;
 
-// ... (import 语句保持不变) ...
+import com.example.runepouch.inventory.RunePouchInventory;
+import com.example.runepouch.item.RunePouchItem;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemStackHandler;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
+import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
+import net.tslat.aoa3.common.registration.AoAEnchantments;
+
+import javax.annotation.Nonnull;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 @Mixin(targets = "net.tslat.aoa3.util.ItemUtil")
 public class ItemUtilMixin {
 
-    @Inject(method = "findAndConsumeRunes", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "findAndConsumeRunes", at = @At("HEAD"), cancellable = true)
     private static void onFindAndConsumeRunes(HashMap<Item, Integer> runeMap, ServerPlayerEntity player,
                                                boolean allowBuffs, @Nonnull ItemStack heldItem,
                                                CallbackInfoReturnable<Boolean> cir) {
-        // 只有原方法返回 true（即成功从背包扣除了符文）时，我们才进行拦截
-        if (!cir.getReturnValueZ()) {
-            return;
-        }
-
         // 1. 获取护符栏中的符文袋
-        // ... (查找符文袋的逻辑保持不变) ...
+        ItemStack pouchStack = ItemStack.EMPTY;
+        LazyOptional<ICuriosItemHandler> curiosOpt = CuriosApi.getCuriosHelper().getCuriosHandler(player);
+        if (!curiosOpt.isPresent()) return;
+        ICuriosItemHandler curios = curiosOpt.orElse(null);
+        if (curios == null) return;
+
+        Optional<ICurioStacksHandler> charmHandlerOpt = curios.getStacksHandler("charm");
+        if (!charmHandlerOpt.isPresent()) return;
+        ICurioStacksHandler charmHandler = charmHandlerOpt.get();
+
+        IItemHandler charmInventory = charmHandler.getStacks();
+        for (int i = 0; i < charmInventory.getSlots(); i++) {
+            ItemStack stack = charmInventory.getStackInSlot(i);
+            if (stack.getItem() instanceof RunePouchItem) {
+                pouchStack = stack;
+                break;
+            }
+        }
         if (pouchStack.isEmpty()) return;
 
         // 2. 获取符文袋的 ItemStackHandler
-        // ... (获取 handler 的逻辑保持不变) ...
+        LazyOptional<IItemHandler> cap = pouchStack.getCapability(net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
+        if (!cap.isPresent()) return;
+        IItemHandler handler = cap.orElse(null);
+        if (!(handler instanceof ItemStackHandler)) return;
+        ItemStackHandler stackHandler = (ItemStackHandler) handler;
 
-        // 3. 从符文袋中扣除与 runeMap 数量相同的符文
-        // 注意：这里的 runeMap 已经是经过附魔减免后的数量（即1个）
-        // ... (扣除逻辑保持不变) ...
+        // 3. 计算实际消耗量（模拟 AoA3 的减免逻辑）
+        // 获取附魔等级
+        int archmage = allowBuffs ? EnchantmentHelper.getEnchantmentLevel(AoAEnchantments.ARCHMAGE.get(), heldItem) : 0;
+        boolean greed = allowBuffs && EnchantmentHelper.getEnchantmentLevel(AoAEnchantments.GREED.get(), heldItem) > 0;
+        // 注意：噩梦盔甲减免暂时不考虑，因为需要检查全套盔甲，这里简化，可后续补充
 
-        // 4. 强制保存
-        // ... (保存逻辑保持不变) ...
+        HashMap<Item, Integer> actualNeeded = new HashMap<>();
+        for (Map.Entry<Item, Integer> entry : runeMap.entrySet()) {
+            int amount = entry.getValue();
+            if (greed) amount += 2;
+            if (archmage > 0) amount -= archmage;
+            // 噩梦盔甲减免在此忽略，如果你需要可以添加
+            if (amount <= 0) amount = 1;
+            actualNeeded.put(entry.getKey(), amount);
+        }
 
-        // 5. 消耗耐久
+        // 4. 检查符文袋中是否有所需符文（按实际消耗量）
+        for (Map.Entry<Item, Integer> entry : actualNeeded.entrySet()) {
+            int found = 0;
+            for (int slot = 0; slot < stackHandler.getSlots(); slot++) {
+                ItemStack stack = stackHandler.getStackInSlot(slot);
+                if (!stack.isEmpty() && stack.getItem() == entry.getKey()) {
+                    found += stack.getCount();
+                }
+            }
+            if (found < entry.getValue()) {
+                // 符文不足，走原逻辑（让 AoA3 去处理）
+                return;
+            }
+        }
+
+        // 5. 从符文袋扣除实际消耗量
+        for (Map.Entry<Item, Integer> entry : actualNeeded.entrySet()) {
+            int remaining = entry.getValue();
+            for (int slot = 0; slot < stackHandler.getSlots(); slot++) {
+                ItemStack stack = stackHandler.getStackInSlot(slot);
+                if (!stack.isEmpty() && stack.getItem() == entry.getKey()) {
+                    int take = Math.min(remaining, stack.getCount());
+                    stack.shrink(take);
+                    remaining -= take;
+                    if (remaining == 0) break;
+                }
+            }
+        }
+
+        // 6. 强制保存
+        CompoundNBT tag = pouchStack.getOrCreateTag();
+        tag.put("Inventory", stackHandler.serializeNBT());
+
+        // 7. 消耗符文袋耐久（每次施法扣1点）
         pouchStack.damageItem(1, player, (p) -> p.sendBreakAnimation(net.minecraft.util.Hand.MAIN_HAND));
 
-        // 6. 返回 true，表示操作成功
+        // 8. 拦截原方法，返回 true（消耗成功）
         cir.setReturnValue(true);
     }
 }
