@@ -116,3 +116,9 @@ publishing {
         }
     }
 }
+
+// Mixin 配置
+mixin {
+    add sourceSets.main, "runepouch.refmap.json"
+    config "runepouch.mixins.json"
+}
