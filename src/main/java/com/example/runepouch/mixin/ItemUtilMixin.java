@@ -5,6 +5,7 @@ import com.example.runepouch.item.RunePouchItem;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -12,12 +13,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
-import top.theillusivec4.curios.api.type.capability.ICurioItemHandler;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Mixin(targets = "net.tslat.aoa3.util.ItemUtil")
 public class ItemUtilMixin {
@@ -28,16 +27,18 @@ public class ItemUtilMixin {
                                                CallbackInfoReturnable<Boolean> cir) {
         // 1. 获取护符栏中的符文袋
         ItemStack pouchStack = ItemStack.EMPTY;
-        Optional<ICuriosItemHandler> curiosOpt = CuriosApi.getCuriosHelper().getCuriosHandler(player);
+        LazyOptional<ICuriosItemHandler> curiosOpt = CuriosApi.getCuriosHelper().getCuriosHandler(player);
         if (!curiosOpt.isPresent()) return;
-        ICuriosItemHandler curios = curiosOpt.get();
+        ICuriosItemHandler curios = curiosOpt.orElse(null);
+        if (curios == null) return;
 
-        Optional<ICurioItemHandler> charmHandlerOpt = curios.getStacksHandler("charm");
+        LazyOptional<IItemHandler> charmHandlerOpt = curios.getStacksHandler("charm");
         if (!charmHandlerOpt.isPresent()) return;
-        ICurioItemHandler charmHandler = charmHandlerOpt.get();
+        IItemHandler charmHandler = charmHandlerOpt.orElse(null);
+        if (charmHandler == null) return;
 
         for (int i = 0; i < charmHandler.getSlots(); i++) {
-            ItemStack stack = charmHandler.getStacks().getStackInSlot(i);
+            ItemStack stack = charmHandler.getStackInSlot(i);
             if (stack.getItem() instanceof RunePouchItem) {
                 pouchStack = stack;
                 break;
@@ -46,12 +47,12 @@ public class ItemUtilMixin {
         if (pouchStack.isEmpty()) return;
 
         // 2. 获取符文袋的 ItemStackHandler
-        Optional<IItemHandler> cap = pouchStack.getCapability(net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
+        LazyOptional<IItemHandler> cap = pouchStack.getCapability(net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
         if (!cap.isPresent()) return;
-        IItemHandler handler = cap.get();
+        IItemHandler handler = cap.orElse(null);
+        if (handler == null) return;
 
         // 3. 检查符文袋中是否有所需符文
-        HashMap<Item, Integer> required = new HashMap<>(runeMap);
         for (Map.Entry<Item, Integer> entry : runeMap.entrySet()) {
             int found = 0;
             for (int slot = 0; slot < handler.getSlots(); slot++) {
@@ -80,12 +81,12 @@ public class ItemUtilMixin {
         }
 
         // 5. 保存符文袋数据
-        Optional<IItemHandler> invOpt = pouchStack.getCapability(net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
-        invOpt.ifPresent(h -> {
-            if (h instanceof RunePouchInventory) {
-                ((RunePouchInventory) h).save();
-            }
-        });
+        pouchStack.getCapability(net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
+                .ifPresent(h -> {
+                    if (h instanceof RunePouchInventory) {
+                        ((RunePouchInventory) h).save();
+                    }
+                });
 
         // 6. 拦截原方法，返回 true
         cir.setReturnValue(true);
