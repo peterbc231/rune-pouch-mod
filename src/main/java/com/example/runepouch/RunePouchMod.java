@@ -1,15 +1,11 @@
 package com.example.runepouch;
 
 import com.example.runepouch.client.screen.RunePouchScreen;
-import com.example.runepouch.curio.CurioProvider;
 import com.example.runepouch.event.ItemEventHandler;
 import com.example.runepouch.init.ModContainers;
 import com.example.runepouch.init.ModItems;
-import com.example.runepouch.item.RunePouchItem;
 import net.minecraft.client.gui.ScreenManager;
-import net.minecraft.item.ItemStack;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.common.Mod;
@@ -18,7 +14,6 @@ import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import top.theillusivec4.curios.api.CuriosCapability;
 import top.theillusivec4.curios.api.SlotTypeMessage;
 import top.theillusivec4.curios.api.SlotTypePreset;
 
@@ -34,9 +29,7 @@ public class RunePouchMod {
         bus.addListener(this::clientSetup);
         bus.addListener(this::enqueueIMC);
         MinecraftForge.EVENT_BUS.register(new ItemEventHandler());
-        // 关键：监听 AttachCapabilitiesEvent
-        MinecraftForge.EVENT_BUS.addGenericListener(ItemStack.class, this::attachCapabilities);
-        LOGGER.info("RunePouchMod initialized");
+        // 不再添加 AttachCapabilitiesEvent 监听，避免与 Curios API 冲突
     }
 
     private void clientSetup(final FMLClientSetupEvent event) {
@@ -46,21 +39,11 @@ public class RunePouchMod {
     }
 
     private void enqueueIMC(final InterModEnqueueEvent event) {
-        // 注册 charm 槽位（护符槽）
-        InterModComms.sendTo("curios", SlotTypeMessage.REGISTER_TYPE,
-                () -> SlotTypePreset.CHARM.getMessageBuilder().build());
-        // 也注册 back 槽位
+        // 注册 back 和 charm 槽位
         InterModComms.sendTo("curios", SlotTypeMessage.REGISTER_TYPE,
                 () -> SlotTypePreset.BACK.getMessageBuilder().build());
+        InterModComms.sendTo("curios", SlotTypeMessage.REGISTER_TYPE,
+                () -> SlotTypePreset.CHARM.getMessageBuilder().build());
         LOGGER.info("Registered curios slots: charm, back");
-    }
-
-    private void attachCapabilities(AttachCapabilitiesEvent<ItemStack> event) {
-        ItemStack stack = event.getObject();
-        if (stack.getItem() instanceof RunePouchItem) {
-            // 使用不死图腾完全相同的方式注册 Capability
-            event.addCapability(CuriosCapability.ID_ITEM, new CurioProvider(stack));
-            LOGGER.info("Attached Curio capability to RunePouchItem");
-        }
     }
 }
