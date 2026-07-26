@@ -39,7 +39,6 @@ public class ItemUtilMixin {
     private static final Set<ResourceLocation> COMPATIBLE_HELMETS = new HashSet<>();
 
     static {
-        // 兼容头盔列表
         String[] helmetIds = {
             "aoa3:achelos_helmet",
             "aoa3:oceanus_helmet",
@@ -71,14 +70,12 @@ public class ItemUtilMixin {
         return GREED_ENCHANT;
     }
 
-    // 检测噩梦盔甲：支持兼容头盔
     private static boolean hasNightmareArmor(ServerPlayerEntity player) {
         ItemStack helmet = player.getItemStackFromSlot(EquipmentSlotType.HEAD);
         ItemStack chest = player.getItemStackFromSlot(EquipmentSlotType.CHEST);
         ItemStack legs = player.getItemStackFromSlot(EquipmentSlotType.LEGS);
         ItemStack boots = player.getItemStackFromSlot(EquipmentSlotType.FEET);
 
-        // 检查胸甲、护腿、靴子是否为噩梦盔甲
         boolean isNightmareChest = !chest.isEmpty() && chest.getItem().getRegistryName() != null &&
                 chest.getItem().getRegistryName().getPath().startsWith("nightmare_chestplate");
         boolean isNightmareLegs = !legs.isEmpty() && legs.getItem().getRegistryName() != null &&
@@ -87,12 +84,10 @@ public class ItemUtilMixin {
         boolean isNightmareBoots = !boots.isEmpty() && boots.getItem().getRegistryName() != null &&
                 boots.getItem().getRegistryName().getPath().startsWith("nightmare_boots");
 
-        // 必须有三件噩梦盔甲（胸、腿、靴）
         if (!isNightmareChest || !isNightmareLegs || !isNightmareBoots) {
             return false;
         }
 
-        // 检查头盔：要么是噩梦头盔，要么在兼容列表里
         if (helmet.isEmpty() || helmet.getItem().getRegistryName() == null) {
             return false;
         }
@@ -128,6 +123,17 @@ public class ItemUtilMixin {
         }
         if (pouchStack.isEmpty()) return;
 
+        // ====== 符文袋法术附魔概率减免（新增） ======
+        int pouchArchmageLevel = EnchantmentHelper.getEnchantmentLevel(getArchmage(), pouchStack);
+        if (pouchArchmageLevel > 0) {
+            int chance = pouchArchmageLevel * 5; // 5%, 10%, 15%
+            if (ThreadLocalRandom.current().nextInt(100) < chance) {
+                // 触发不消耗，直接返回 true
+                cir.setReturnValue(true);
+                return;
+            }
+        }
+
         // 2. 获取符文袋的 ItemStackHandler
         LazyOptional<IItemHandler> cap = pouchStack.getCapability(net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
         if (!cap.isPresent()) return;
@@ -135,7 +141,7 @@ public class ItemUtilMixin {
         if (!(handler instanceof ItemStackHandler)) return;
         ItemStackHandler stackHandler = (ItemStackHandler) handler;
 
-        // 3. 计算实际消耗量
+        // 3. 计算实际消耗量（法杖法术、贪婪、噩梦）
         int archmage = allowBuffs ? EnchantmentHelper.getEnchantmentLevel(getArchmage(), heldItem) : 0;
         boolean greed = allowBuffs && EnchantmentHelper.getEnchantmentLevel(getGreed(), heldItem) > 0;
         boolean nightmare = allowBuffs && hasNightmareArmor(player);
