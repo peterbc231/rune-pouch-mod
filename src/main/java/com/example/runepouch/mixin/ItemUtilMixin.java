@@ -13,10 +13,12 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
+import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Mixin(targets = "net.tslat.aoa3.util.ItemUtil")
 public class ItemUtilMixin {
@@ -32,13 +34,13 @@ public class ItemUtilMixin {
         ICuriosItemHandler curios = curiosOpt.orElse(null);
         if (curios == null) return;
 
-        LazyOptional<IItemHandler> charmHandlerOpt = curios.getStacksHandler("charm");
+        Optional<ICurioStacksHandler> charmHandlerOpt = curios.getStacksHandler("charm");
         if (!charmHandlerOpt.isPresent()) return;
-        IItemHandler charmHandler = charmHandlerOpt.orElse(null);
-        if (charmHandler == null) return;
+        ICurioStacksHandler charmHandler = charmHandlerOpt.get();
 
-        for (int i = 0; i < charmHandler.getSlots(); i++) {
-            ItemStack stack = charmHandler.getStackInSlot(i);
+        IItemHandler charmInventory = charmHandler.getStacks();
+        for (int i = 0; i < charmInventory.getSlots(); i++) {
+            ItemStack stack = charmInventory.getStackInSlot(i);
             if (stack.getItem() instanceof RunePouchItem) {
                 pouchStack = stack;
                 break;
