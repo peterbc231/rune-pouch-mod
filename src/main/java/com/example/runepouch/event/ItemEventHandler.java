@@ -7,7 +7,7 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.SimpleNamedContainerProvider;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -25,10 +25,9 @@ public class ItemEventHandler {
         if (stack.getItem() instanceof RunePouchItem) {
             event.setCanceled(true);
             if (!world.isRemote) {
-                // 不再消耗耐久（移除 damageItem 调用）
                 NetworkHooks.openGui((ServerPlayerEntity) player, new SimpleNamedContainerProvider(
                         (id, inv, p) -> new RunePouchContainer(id, inv, hand),
-                        new StringTextComponent("Rune Pouch")
+                        new TranslationTextComponent("container.runepouch.rune_pouch")
                 ), buf -> buf.writeEnumValue(hand));
             }
         }
