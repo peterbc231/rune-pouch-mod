@@ -23,31 +23,40 @@ public class CurioProvider implements ICapabilityProvider {
 
     public CurioProvider(ItemStack stack) {
         this.curioOptional = LazyOptional.of(() -> new ICurio() {
-            @Override
+            // 允许右键直接装备
             public boolean canEquipFromUse(SlotContext ctx) {
                 return true;
             }
 
-            @Override
+            // 允许渲染
             public boolean canRender(String identifier, int index, LivingEntity livingEntity) {
                 return true;
             }
 
-            @Override
+            // 渲染物品
             public void render(String identifier, int index, MatrixStack matrixStack,
                                IRenderTypeBuffer renderTypeBuffer, int light, LivingEntity livingEntity,
                                float limbSwing, float limbSwingAmount, float partialTicks,
                                float ageInTicks, float netHeadYaw, float headPitch) {
-                // 使用不死图腾的渲染逻辑（完全相同的调用）
                 ICurio.RenderHelper.translateIfSneaking(matrixStack, livingEntity);
                 ICurio.RenderHelper.rotateIfSneaking(matrixStack, livingEntity);
                 matrixStack.scale(0.35F, 0.35F, 0.35F);
                 matrixStack.translate(0.0F, 0.5F, -0.4F);
                 matrixStack.rotate(Direction.DOWN.getRotation());
-                // 1.16.5 的 ItemRenderer.renderItem 正确签名
                 Minecraft.getInstance().getItemRenderer().renderItem(stack,
-                        ItemCameraTransforms.TransformType.NONE, light, OverlayTexture.NO_OVERLAY,
+                        ItemCameraTransforms.TransformType.NONE,
+                        light, OverlayTexture.NO_OVERLAY,
                         matrixStack, renderTypeBuffer);
+            }
+
+            // 允许任何槽位（强制 true）
+            public boolean canEquip(SlotContext slotContext, ItemStack stack) {
+                return true;
+            }
+
+            // 允许取下
+            public boolean canUnequip(SlotContext slotContext, ItemStack stack) {
+                return true;
             }
         });
     }

@@ -34,7 +34,9 @@ public class RunePouchMod {
         bus.addListener(this::clientSetup);
         bus.addListener(this::enqueueIMC);
         MinecraftForge.EVENT_BUS.register(new ItemEventHandler());
+        // 关键：监听 AttachCapabilitiesEvent
         MinecraftForge.EVENT_BUS.addGenericListener(ItemStack.class, this::attachCapabilities);
+        LOGGER.info("RunePouchMod initialized");
     }
 
     private void clientSetup(final FMLClientSetupEvent event) {
@@ -44,16 +46,21 @@ public class RunePouchMod {
     }
 
     private void enqueueIMC(final InterModEnqueueEvent event) {
+        // 注册 charm 槽位（护符槽）
         InterModComms.sendTo("curios", SlotTypeMessage.REGISTER_TYPE,
-                () -> SlotTypePreset.CHARM.getMessageBuilder().build()); // 使用护符槽测试
-        LOGGER.info("Registered curios slot: charm");
+                () -> SlotTypePreset.CHARM.getMessageBuilder().build());
+        // 也注册 back 槽位
+        InterModComms.sendTo("curios", SlotTypeMessage.REGISTER_TYPE,
+                () -> SlotTypePreset.BACK.getMessageBuilder().build());
+        LOGGER.info("Registered curios slots: charm, back");
     }
 
     private void attachCapabilities(AttachCapabilitiesEvent<ItemStack> event) {
         ItemStack stack = event.getObject();
         if (stack.getItem() instanceof RunePouchItem) {
-            // 使用和不死图腾完全相同的 Capability ID
+            // 使用不死图腾完全相同的方式注册 Capability
             event.addCapability(CuriosCapability.ID_ITEM, new CurioProvider(stack));
+            LOGGER.info("Attached Curio capability to RunePouchItem");
         }
     }
 }
