@@ -46,11 +46,10 @@ public class ItemUtilMixin {
         return GREED_ENCHANT;
     }
 
-    // 手动检测全套噩梦盔甲（不依赖AoA3内部API）
+    // 检测全套噩梦盔甲（使用 getArmorSlots）
     private static boolean hasNightmareArmor(ServerPlayerEntity player) {
         boolean hasHelmet = false, hasChest = false, hasLegs = false, hasBoots = false;
-        // player.inventory.armor 是盔甲槽列表，顺序：feet, legs, chest, head
-        for (ItemStack armor : player.inventory.armor) {
+        for (ItemStack armor : player.getArmorSlots()) {
             if (armor.isEmpty()) continue;
             ResourceLocation regName = armor.getItem().getRegistryName();
             if (regName == null) continue;
