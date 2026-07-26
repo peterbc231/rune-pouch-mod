@@ -26,6 +26,7 @@ import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Mixin(targets = "net.tslat.aoa3.util.ItemUtil")
 public class ItemUtilMixin {
@@ -55,7 +56,6 @@ public class ItemUtilMixin {
 
         boolean hasHelmet = !helmet.isEmpty() && helmet.getItem().getRegistryName() != null && helmet.getItem().getRegistryName().getPath().startsWith("nightmare_helmet");
         boolean hasChest = !chest.isEmpty() && chest.getItem().getRegistryName() != null && chest.getItem().getRegistryName().getPath().startsWith("nightmare_chestplate");
-        // 修复：同时匹配 nightmare_legs 和 nightmare_leggings
         boolean hasLegs = !legs.isEmpty() && legs.getItem().getRegistryName() != null && 
                 (legs.getItem().getRegistryName().getPath().startsWith("nightmare_legs") || 
                  legs.getItem().getRegistryName().getPath().startsWith("nightmare_leggings"));
@@ -96,7 +96,18 @@ public class ItemUtilMixin {
         if (!(handler instanceof ItemStackHandler)) return;
         ItemStackHandler stackHandler = (ItemStackHandler) handler;
 
-        // 3. 计算实际消耗量
+        // 3. 检查符文袋上的法术附魔（专属效果：每级5%概率不消耗）
+        int archmageLevel = EnchantmentHelper.getEnchantmentLevel(getArchmage(), pouchStack);
+        if (archmageLevel > 0) {
+            int chance = archmageLevel * 5; // 5%, 10%, 15%
+            if (ThreadLocalRandom.current().nextInt(100) < chance) {
+                // 触发不消耗，直接返回 true（原方法也会返回true，但我们跳过扣除）
+                cir.setReturnValue(true);
+                return;
+            }
+        }
+
+        // 4. 计算实际消耗量（AoA3原版减免逻辑：法术、贪婪、噩梦）
         int archmage = allowBuffs ? EnchantmentHelper.getEnchantmentLevel(getArchmage(), heldItem) : 0;
         boolean greed = allowBuffs && EnchantmentHelper.getEnchantmentLevel(getGreed(), heldItem) > 0;
         boolean nightmare = allowBuffs && hasNightmareArmor(player);
@@ -111,7 +122,7 @@ public class ItemUtilMixin {
             actualNeeded.put(entry.getKey(), amount);
         }
 
-        // 4. 检查符文袋中是否有所需符文
+        // 5. 检查符文袋中是否有所需符文
         for (Map.Entry<Item, Integer> entry : actualNeeded.entrySet()) {
             int found = 0;
             for (int slot = 0; slot < stackHandler.getSlots(); slot++) {
@@ -125,7 +136,7 @@ public class ItemUtilMixin {
             }
         }
 
-        // 5. 从符文袋扣除
+        // 6. 从符文袋扣除
         for (Map.Entry<Item, Integer> entry : actualNeeded.entrySet()) {
             int remaining = entry.getValue();
             for (int slot = 0; slot < stackHandler.getSlots(); slot++) {
@@ -139,14 +150,14 @@ public class ItemUtilMixin {
             }
         }
 
-        // 6. 强制保存
+        // 7. 强制保存
         CompoundNBT tag = pouchStack.getOrCreateTag();
         tag.put("Inventory", stackHandler.serializeNBT());
 
-        // 7. 消耗耐久
+        // 8. 消耗耐久
         pouchStack.damageItem(1, player, (p) -> p.sendBreakAnimation(net.minecraft.util.Hand.MAIN_HAND));
 
-        // 8. 拦截
+        // 9. 拦截原方法，返回 true
         cir.setReturnValue(true);
     }
 }

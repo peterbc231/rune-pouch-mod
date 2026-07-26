@@ -2,6 +2,7 @@ package com.example.runepouch;
 
 import com.example.runepouch.client.screen.RunePouchScreen;
 import com.example.runepouch.event.ItemEventHandler;
+import com.example.runepouch.event.RunePouchEnchantmentHandler;
 import com.example.runepouch.init.ModContainers;
 import com.example.runepouch.init.ModItems;
 import net.minecraft.client.gui.ScreenManager;
@@ -29,6 +30,7 @@ public class RunePouchMod {
         bus.addListener(this::clientSetup);
         bus.addListener(this::enqueueIMC);
         MinecraftForge.EVENT_BUS.register(new ItemEventHandler());
+        MinecraftForge.EVENT_BUS.register(new RunePouchEnchantmentHandler());
     }
 
     private void clientSetup(final FMLClientSetupEvent event) {
