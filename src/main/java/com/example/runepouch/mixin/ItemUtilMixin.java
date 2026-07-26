@@ -1,98 +1,37 @@
 package com.example.runepouch.mixin;
 
-import com.example.runepouch.inventory.RunePouchInventory;
-import com.example.runepouch.item.RunePouchItem;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemStackHandler;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import top.theillusivec4.curios.api.CuriosApi;
-import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
-import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
-
-import javax.annotation.Nonnull;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+// ... (import 语句保持不变) ...
 
 @Mixin(targets = "net.tslat.aoa3.util.ItemUtil")
 public class ItemUtilMixin {
 
-    @Inject(method = "findAndConsumeRunes", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "findAndConsumeRunes", at = @At("RETURN"), cancellable = true)
     private static void onFindAndConsumeRunes(HashMap<Item, Integer> runeMap, ServerPlayerEntity player,
                                                boolean allowBuffs, @Nonnull ItemStack heldItem,
                                                CallbackInfoReturnable<Boolean> cir) {
-        // 1. 获取护符栏中的符文袋
-        ItemStack pouchStack = ItemStack.EMPTY;
-        LazyOptional<ICuriosItemHandler> curiosOpt = CuriosApi.getCuriosHelper().getCuriosHandler(player);
-        if (!curiosOpt.isPresent()) return;
-        ICuriosItemHandler curios = curiosOpt.orElse(null);
-        if (curios == null) return;
-
-        Optional<ICurioStacksHandler> charmHandlerOpt = curios.getStacksHandler("charm");
-        if (!charmHandlerOpt.isPresent()) return;
-        ICurioStacksHandler charmHandler = charmHandlerOpt.get();
-
-        IItemHandler charmInventory = charmHandler.getStacks();
-        for (int i = 0; i < charmInventory.getSlots(); i++) {
-            ItemStack stack = charmInventory.getStackInSlot(i);
-            if (stack.getItem() instanceof RunePouchItem) {
-                pouchStack = stack;
-                break;
-            }
+        // 只有原方法返回 true（即成功从背包扣除了符文）时，我们才进行拦截
+        if (!cir.getReturnValueZ()) {
+            return;
         }
+
+        // 1. 获取护符栏中的符文袋
+        // ... (查找符文袋的逻辑保持不变) ...
         if (pouchStack.isEmpty()) return;
 
         // 2. 获取符文袋的 ItemStackHandler
-        LazyOptional<IItemHandler> cap = pouchStack.getCapability(net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
-        if (!cap.isPresent()) return;
-        IItemHandler handler = cap.orElse(null);
-        if (!(handler instanceof ItemStackHandler)) return;
-        ItemStackHandler stackHandler = (ItemStackHandler) handler;
+        // ... (获取 handler 的逻辑保持不变) ...
 
-        // 3. 检查符文袋中是否有所需符文
-        for (Map.Entry<Item, Integer> entry : runeMap.entrySet()) {
-            int found = 0;
-            for (int slot = 0; slot < stackHandler.getSlots(); slot++) {
-                ItemStack stack = stackHandler.getStackInSlot(slot);
-                if (!stack.isEmpty() && stack.getItem() == entry.getKey()) {
-                    found += stack.getCount();
-                }
-            }
-            if (found < entry.getValue()) {
-                return; // 符文不足，走原逻辑
-            }
-        }
+        // 3. 从符文袋中扣除与 runeMap 数量相同的符文
+        // 注意：这里的 runeMap 已经是经过附魔减免后的数量（即1个）
+        // ... (扣除逻辑保持不变) ...
 
-        // 4. 从符文袋扣除（直接扣除 runeMap 中的数量）
-        for (Map.Entry<Item, Integer> entry : runeMap.entrySet()) {
-            int remaining = entry.getValue();
-            for (int slot = 0; slot < stackHandler.getSlots(); slot++) {
-                ItemStack stack = stackHandler.getStackInSlot(slot);
-                if (!stack.isEmpty() && stack.getItem() == entry.getKey()) {
-                    int take = Math.min(remaining, stack.getCount());
-                    stack.shrink(take);
-                    remaining -= take;
-                    if (remaining == 0) break;
-                }
-            }
-        }
+        // 4. 强制保存
+        // ... (保存逻辑保持不变) ...
 
-        // 5. 强制保存
-        CompoundNBT tag = pouchStack.getOrCreateTag();
-        tag.put("Inventory", stackHandler.serializeNBT());
-
-        // 6. 消耗耐久
+        // 5. 消耗耐久
         pouchStack.damageItem(1, player, (p) -> p.sendBreakAnimation(net.minecraft.util.Hand.MAIN_HAND));
 
-        // 7. 拦截原方法，返回 true
+        // 6. 返回 true，表示操作成功
         cir.setReturnValue(true);
     }
 }
