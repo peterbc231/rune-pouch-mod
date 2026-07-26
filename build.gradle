@@ -72,7 +72,10 @@ repositories {
 }
 
 dependencies {
+    compileOnly files("libs/aoa3-3.6.11.jar")
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    compileOnly files("libs/aoa3-3.6.11.jar")
+    compileOnly files("libs/aoa3-3.6.11.jar")
     compileOnly fg.deobf("maven.modrinth:vvuO3ImH:5qPuCFYD")
     // 使用本地 JAR 依赖 AoA3
     compileOnly fg.deobf("net.tslat.aoa3:aoa3:3.6.11")
