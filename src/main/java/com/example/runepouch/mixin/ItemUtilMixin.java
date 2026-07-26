@@ -47,49 +47,36 @@ public class ItemUtilMixin {
         return GREED_ENCHANT;
     }
 
-    // 检测全套噩梦盔甲，并打印日志
     private static boolean hasNightmareArmor(ServerPlayerEntity player) {
         ItemStack helmet = player.getItemStackFromSlot(EquipmentSlotType.HEAD);
         ItemStack chest = player.getItemStackFromSlot(EquipmentSlotType.CHEST);
         ItemStack legs = player.getItemStackFromSlot(EquipmentSlotType.LEGS);
         ItemStack boots = player.getItemStackFromSlot(EquipmentSlotType.FEET);
 
-        // 打印每个槽位的注册名
-        System.out.println("[RunePouch] 头盔: " + (helmet.isEmpty() ? "空" : helmet.getItem().getRegistryName()));
-        System.out.println("[RunePouch] 胸甲: " + (chest.isEmpty() ? "空" : chest.getItem().getRegistryName()));
-        System.out.println("[RunePouch] 护腿: " + (legs.isEmpty() ? "空" : legs.getItem().getRegistryName()));
-        System.out.println("[RunePouch] 靴子: " + (boots.isEmpty() ? "空" : boots.getItem().getRegistryName()));
-
         boolean hasHelmet = !helmet.isEmpty() && helmet.getItem().getRegistryName() != null && helmet.getItem().getRegistryName().getPath().startsWith("nightmare_helmet");
         boolean hasChest = !chest.isEmpty() && chest.getItem().getRegistryName() != null && chest.getItem().getRegistryName().getPath().startsWith("nightmare_chestplate");
-        boolean hasLegs = !legs.isEmpty() && legs.getItem().getRegistryName() != null && legs.getItem().getRegistryName().getPath().startsWith("nightmare_leggings");
+        // 修复：同时匹配 nightmare_legs 和 nightmare_leggings
+        boolean hasLegs = !legs.isEmpty() && legs.getItem().getRegistryName() != null && 
+                (legs.getItem().getRegistryName().getPath().startsWith("nightmare_legs") || 
+                 legs.getItem().getRegistryName().getPath().startsWith("nightmare_leggings"));
         boolean hasBoots = !boots.isEmpty() && boots.getItem().getRegistryName() != null && boots.getItem().getRegistryName().getPath().startsWith("nightmare_boots");
 
-        boolean result = hasHelmet && hasChest && hasLegs && hasBoots;
-        System.out.println("[RunePouch] 全套噩梦盔甲检测结果: " + result);
-        return result;
+        return hasHelmet && hasChest && hasLegs && hasBoots;
     }
 
     @Inject(method = "findAndConsumeRunes", at = @At("HEAD"), cancellable = true)
     private static void onFindAndConsumeRunes(HashMap<Item, Integer> runeMap, ServerPlayerEntity player,
                                                boolean allowBuffs, @Nonnull ItemStack heldItem,
                                                CallbackInfoReturnable<Boolean> cir) {
-        System.out.println("[RunePouch] ===== findAndConsumeRunes 调用 =====");
         // 1. 获取护符栏中的符文袋
         ItemStack pouchStack = ItemStack.EMPTY;
         LazyOptional<ICuriosItemHandler> curiosOpt = CuriosApi.getCuriosHelper().getCuriosHandler(player);
-        if (!curiosOpt.isPresent()) {
-            System.out.println("[RunePouch] Curios 处理器未找到");
-            return;
-        }
+        if (!curiosOpt.isPresent()) return;
         ICuriosItemHandler curios = curiosOpt.orElse(null);
         if (curios == null) return;
 
         Optional<ICurioStacksHandler> charmHandlerOpt = curios.getStacksHandler("charm");
-        if (!charmHandlerOpt.isPresent()) {
-            System.out.println("[RunePouch] charm 槽未找到");
-            return;
-        }
+        if (!charmHandlerOpt.isPresent()) return;
         ICurioStacksHandler charmHandler = charmHandlerOpt.get();
 
         IItemHandler charmInventory = charmHandler.getStacks();
@@ -97,34 +84,22 @@ public class ItemUtilMixin {
             ItemStack stack = charmInventory.getStackInSlot(i);
             if (stack.getItem() instanceof RunePouchItem) {
                 pouchStack = stack;
-                System.out.println("[RunePouch] 找到符文袋");
                 break;
             }
         }
-        if (pouchStack.isEmpty()) {
-            System.out.println("[RunePouch] 未找到符文袋");
-            return;
-        }
+        if (pouchStack.isEmpty()) return;
 
         // 2. 获取符文袋的 ItemStackHandler
         LazyOptional<IItemHandler> cap = pouchStack.getCapability(net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
-        if (!cap.isPresent()) {
-            System.out.println("[RunePouch] 无法获取 ItemStackHandler");
-            return;
-        }
+        if (!cap.isPresent()) return;
         IItemHandler handler = cap.orElse(null);
-        if (!(handler instanceof ItemStackHandler)) {
-            System.out.println("[RunePouch] handler 不是 ItemStackHandler");
-            return;
-        }
+        if (!(handler instanceof ItemStackHandler)) return;
         ItemStackHandler stackHandler = (ItemStackHandler) handler;
 
         // 3. 计算实际消耗量
         int archmage = allowBuffs ? EnchantmentHelper.getEnchantmentLevel(getArchmage(), heldItem) : 0;
         boolean greed = allowBuffs && EnchantmentHelper.getEnchantmentLevel(getGreed(), heldItem) > 0;
         boolean nightmare = allowBuffs && hasNightmareArmor(player);
-
-        System.out.println("[RunePouch] 法术: " + archmage + ", 贪婪: " + greed + ", 噩梦: " + nightmare);
 
         HashMap<Item, Integer> actualNeeded = new HashMap<>();
         for (Map.Entry<Item, Integer> entry : runeMap.entrySet()) {
@@ -146,7 +121,6 @@ public class ItemUtilMixin {
                 }
             }
             if (found < entry.getValue()) {
-                System.out.println("[RunePouch] 符文不足，走原逻辑");
                 return;
             }
         }
@@ -171,8 +145,6 @@ public class ItemUtilMixin {
 
         // 7. 消耗耐久
         pouchStack.damageItem(1, player, (p) -> p.sendBreakAnimation(net.minecraft.util.Hand.MAIN_HAND));
-
-        System.out.println("[RunePouch] ===== 成功扣除符文 =====");
 
         // 8. 拦截
         cir.setReturnValue(true);
