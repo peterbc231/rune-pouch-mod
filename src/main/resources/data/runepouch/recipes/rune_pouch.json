@@ -1,13 +1,19 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    " D ",
-    "D D",
-    " D "
+    "DBD",
+    "DBD",
+    "UUU"
   ],
   "key": {
     "D": {
       "item": "minecraft:diamond"
+    },
+    "B": {
+      "item": "aoa3:sapphire"
+    },
+    "U": {
+      "item": "aoa3:unpowered_rune"
     }
   },
   "result": {
