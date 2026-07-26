@@ -29,7 +29,6 @@ public class RunePouchMod {
         bus.addListener(this::clientSetup);
         bus.addListener(this::enqueueIMC);
         MinecraftForge.EVENT_BUS.register(new ItemEventHandler());
-        // 不再添加 AttachCapabilitiesEvent 监听，避免与 Curios API 冲突
     }
 
     private void clientSetup(final FMLClientSetupEvent event) {
@@ -39,7 +38,6 @@ public class RunePouchMod {
     }
 
     private void enqueueIMC(final InterModEnqueueEvent event) {
-        // 注册 back 和 charm 槽位
         InterModComms.sendTo("curios", SlotTypeMessage.REGISTER_TYPE,
                 () -> SlotTypePreset.BACK.getMessageBuilder().build());
         InterModComms.sendTo("curios", SlotTypeMessage.REGISTER_TYPE,
