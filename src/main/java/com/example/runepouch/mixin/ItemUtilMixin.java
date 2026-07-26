@@ -24,15 +24,38 @@ import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.Set;
 
 @Mixin(targets = "net.tslat.aoa3.util.ItemUtil")
 public class ItemUtilMixin {
 
     private static Enchantment ARCHMAGE_ENCHANT = null;
     private static Enchantment GREED_ENCHANT = null;
+
+    private static final Set<ResourceLocation> COMPATIBLE_HELMETS = new HashSet<>();
+
+    static {
+        // 兼容头盔列表
+        String[] helmetIds = {
+            "aoa3:achelos_helmet",
+            "aoa3:oceanus_helmet",
+            "aoa3:sealord_helmet",
+            "aoa3:face_mask",
+            "aoa3:night_vision_goggles",
+            "aoa3:helm_of_the_dextrous",
+            "aoa3:helm_of_the_dryad",
+            "aoa3:helm_of_the_trawler",
+            "aoa3:helm_of_the_treasurer",
+            "aoa3:helm_of_the_warrior"
+        };
+        for (String id : helmetIds) {
+            COMPATIBLE_HELMETS.add(new ResourceLocation(id));
+        }
+    }
 
     private static Enchantment getArchmage() {
         if (ARCHMAGE_ENCHANT == null) {
@@ -48,20 +71,36 @@ public class ItemUtilMixin {
         return GREED_ENCHANT;
     }
 
+    // 检测噩梦盔甲：支持兼容头盔
     private static boolean hasNightmareArmor(ServerPlayerEntity player) {
         ItemStack helmet = player.getItemStackFromSlot(EquipmentSlotType.HEAD);
         ItemStack chest = player.getItemStackFromSlot(EquipmentSlotType.CHEST);
         ItemStack legs = player.getItemStackFromSlot(EquipmentSlotType.LEGS);
         ItemStack boots = player.getItemStackFromSlot(EquipmentSlotType.FEET);
 
-        boolean hasHelmet = !helmet.isEmpty() && helmet.getItem().getRegistryName() != null && helmet.getItem().getRegistryName().getPath().startsWith("nightmare_helmet");
-        boolean hasChest = !chest.isEmpty() && chest.getItem().getRegistryName() != null && chest.getItem().getRegistryName().getPath().startsWith("nightmare_chestplate");
-        boolean hasLegs = !legs.isEmpty() && legs.getItem().getRegistryName() != null && 
-                (legs.getItem().getRegistryName().getPath().startsWith("nightmare_legs") || 
+        // 检查胸甲、护腿、靴子是否为噩梦盔甲
+        boolean isNightmareChest = !chest.isEmpty() && chest.getItem().getRegistryName() != null &&
+                chest.getItem().getRegistryName().getPath().startsWith("nightmare_chestplate");
+        boolean isNightmareLegs = !legs.isEmpty() && legs.getItem().getRegistryName() != null &&
+                (legs.getItem().getRegistryName().getPath().startsWith("nightmare_legs") ||
                  legs.getItem().getRegistryName().getPath().startsWith("nightmare_leggings"));
-        boolean hasBoots = !boots.isEmpty() && boots.getItem().getRegistryName() != null && boots.getItem().getRegistryName().getPath().startsWith("nightmare_boots");
+        boolean isNightmareBoots = !boots.isEmpty() && boots.getItem().getRegistryName() != null &&
+                boots.getItem().getRegistryName().getPath().startsWith("nightmare_boots");
 
-        return hasHelmet && hasChest && hasLegs && hasBoots;
+        // 必须有三件噩梦盔甲（胸、腿、靴）
+        if (!isNightmareChest || !isNightmareLegs || !isNightmareBoots) {
+            return false;
+        }
+
+        // 检查头盔：要么是噩梦头盔，要么在兼容列表里
+        if (helmet.isEmpty() || helmet.getItem().getRegistryName() == null) {
+            return false;
+        }
+        ResourceLocation helmetId = helmet.getItem().getRegistryName();
+        boolean isNightmareHelmet = helmetId.getPath().startsWith("nightmare_helmet");
+        boolean isCompatible = COMPATIBLE_HELMETS.contains(helmetId);
+
+        return isNightmareHelmet || isCompatible;
     }
 
     @Inject(method = "findAndConsumeRunes", at = @At("HEAD"), cancellable = true)
@@ -96,18 +135,7 @@ public class ItemUtilMixin {
         if (!(handler instanceof ItemStackHandler)) return;
         ItemStackHandler stackHandler = (ItemStackHandler) handler;
 
-        // 3. 检查符文袋上的法术附魔（专属效果：每级5%概率不消耗）
-        int archmageLevel = EnchantmentHelper.getEnchantmentLevel(getArchmage(), pouchStack);
-        if (archmageLevel > 0) {
-            int chance = archmageLevel * 5; // 5%, 10%, 15%
-            if (ThreadLocalRandom.current().nextInt(100) < chance) {
-                // 触发不消耗，直接返回 true（原方法也会返回true，但我们跳过扣除）
-                cir.setReturnValue(true);
-                return;
-            }
-        }
-
-        // 4. 计算实际消耗量（AoA3原版减免逻辑：法术、贪婪、噩梦）
+        // 3. 计算实际消耗量
         int archmage = allowBuffs ? EnchantmentHelper.getEnchantmentLevel(getArchmage(), heldItem) : 0;
         boolean greed = allowBuffs && EnchantmentHelper.getEnchantmentLevel(getGreed(), heldItem) > 0;
         boolean nightmare = allowBuffs && hasNightmareArmor(player);
@@ -122,7 +150,7 @@ public class ItemUtilMixin {
             actualNeeded.put(entry.getKey(), amount);
         }
 
-        // 5. 检查符文袋中是否有所需符文
+        // 4. 检查符文袋中是否有所需符文
         for (Map.Entry<Item, Integer> entry : actualNeeded.entrySet()) {
             int found = 0;
             for (int slot = 0; slot < stackHandler.getSlots(); slot++) {
@@ -136,7 +164,7 @@ public class ItemUtilMixin {
             }
         }
 
-        // 6. 从符文袋扣除
+        // 5. 从符文袋扣除
         for (Map.Entry<Item, Integer> entry : actualNeeded.entrySet()) {
             int remaining = entry.getValue();
             for (int slot = 0; slot < stackHandler.getSlots(); slot++) {
@@ -150,14 +178,14 @@ public class ItemUtilMixin {
             }
         }
 
-        // 7. 强制保存
+        // 6. 强制保存
         CompoundNBT tag = pouchStack.getOrCreateTag();
         tag.put("Inventory", stackHandler.serializeNBT());
 
-        // 8. 消耗耐久
+        // 7. 消耗耐久
         pouchStack.damageItem(1, player, (p) -> p.sendBreakAnimation(net.minecraft.util.Hand.MAIN_HAND));
 
-        // 9. 拦截原方法，返回 true
+        // 8. 拦截
         cir.setReturnValue(true);
     }
 }
