@@ -1,5 +1,6 @@
 package com.example.runepouch.inventory;
 
+import com.example.runepouch.item.RunePouchItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraftforge.common.capabilities.Capability;
@@ -30,6 +31,12 @@ public class RunePouchInventory implements ICapabilityProvider {
             public boolean isItemValid(int slot, @Nonnull ItemStack stack) {
                 if (stack.isEmpty()) return false;
                 if (stack.getItem().getRegistryName() == null) return false;
+
+                // 禁止放入符文袋自身（防止套娃）
+                if (stack.getItem() instanceof RunePouchItem) {
+                    return false;
+                }
+
                 String path = stack.getItem().getRegistryName().getPath().toLowerCase(Locale.ROOT);
                 return path.contains("rune");
             }
