@@ -123,17 +123,6 @@ public class ItemUtilMixin {
         }
         if (pouchStack.isEmpty()) return;
 
-        // ====== 符文袋法术附魔概率减免（新增） ======
-        int pouchArchmageLevel = EnchantmentHelper.getEnchantmentLevel(getArchmage(), pouchStack);
-        if (pouchArchmageLevel > 0) {
-            int chance = pouchArchmageLevel * 5; // 5%, 10%, 15%
-            if (ThreadLocalRandom.current().nextInt(100) < chance) {
-                // 触发不消耗，直接返回 true
-                cir.setReturnValue(true);
-                return;
-            }
-        }
-
         // 2. 获取符文袋的 ItemStackHandler
         LazyOptional<IItemHandler> cap = pouchStack.getCapability(net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
         if (!cap.isPresent()) return;
@@ -166,11 +155,24 @@ public class ItemUtilMixin {
                 }
             }
             if (found < entry.getValue()) {
+                // 符文不足，走原逻辑（让 AoA3 处理）
                 return;
             }
         }
 
-        // 5. 从符文袋扣除
+        // ====== 符文袋法术附魔概率减免（符文充足时才触发） ======
+        int pouchArchmageLevel = EnchantmentHelper.getEnchantmentLevel(getArchmage(), pouchStack);
+        if (pouchArchmageLevel > 0) {
+            int chance = pouchArchmageLevel * 5; // 5%, 10%, 15%
+            if (ThreadLocalRandom.current().nextInt(100) < chance) {
+                // 触发不消耗：跳过扣除，但消耗耐久
+                pouchStack.damageItem(1, player, (p) -> p.sendBreakAnimation(net.minecraft.util.Hand.MAIN_HAND));
+                cir.setReturnValue(true);
+                return;
+            }
+        }
+
+        // 5. 未触发概率：从符文袋扣除实际消耗量
         for (Map.Entry<Item, Integer> entry : actualNeeded.entrySet()) {
             int remaining = entry.getValue();
             for (int slot = 0; slot < stackHandler.getSlots(); slot++) {
@@ -191,7 +193,7 @@ public class ItemUtilMixin {
         // 7. 消耗耐久
         pouchStack.damageItem(1, player, (p) -> p.sendBreakAnimation(net.minecraft.util.Hand.MAIN_HAND));
 
-        // 8. 拦截
+        // 8. 拦截原方法，返回 true
         cir.setReturnValue(true);
     }
 }
