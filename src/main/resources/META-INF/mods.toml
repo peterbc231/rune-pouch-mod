@@ -4,7 +4,7 @@ license="MIT"
 
 [[mods]]
 modId="runepouch"
-version="1.0.4"
+version="1.0.5"
 displayName="Rune Pouch"
 authors="741741"
 description="A pouch for carrying runes. Supports Curios API."
